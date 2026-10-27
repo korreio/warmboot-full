@@ -581,7 +581,11 @@ class WarmbootCliTests(unittest.TestCase):
         self.assertIn("docs/decisions.md", role_index)
 
     def test_repository_owned_markdown_relative_links_resolve(self) -> None:
-        """Resolve local links; repository-owned Markdown carries no outside URL at all."""
+        """Resolve local links; repository-owned Markdown carries no outside URL.
+
+        The one exception is README's link to the sibling Warmboot Light repository.
+        """
+        sibling_link = "](https://github.com/korreio/warmboot)"
         link_pattern = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
         outside_url_pattern = re.compile(r"\b(?:https?://|mailto:)\S*", re.IGNORECASE)
         checked = 0
@@ -591,6 +595,8 @@ class WarmbootCliTests(unittest.TestCase):
             if any(part.startswith(".") or part == "__pycache__" for part in relative.split("/")):
                 continue
             text = path.read_text(encoding="utf-8")
+            if relative == "README.md":
+                text = text.replace(sibling_link, "](#which-edition)")
             broken.extend(
                 (relative, match.group(0)) for match in outside_url_pattern.finditer(text)
             )
