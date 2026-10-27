@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "target_identity": "ba7ac6fd6777df250af2b6efaae2e67412d2fdd2107239a40fa2352240ea5b14",
+  "warmboot_release": {
+    "identity_kind": "ANNOTATED_TAG",
+    "ref": "agent-warmboot-v1.0.0",
+    "resolved_commit": "1111111111111111111111111111111111111111",
+    "manifest_path": "old-release-manifest.json",
+    "manifest_sha256": "5a26cdf7cc41f665d76ab13f490c712f51bf8235bfb5541b3f4651f1610ca963"
+  },
+  "dispositions_recorded": true,
+  "helper_manifest_role": "LOCAL_SELF_DECLARED_EVIDENCE"
+}

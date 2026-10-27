@@ -1,0 +1,181 @@
+{
+  "authority": {
+    "credentials": false,
+    "database_mutation": false,
+    "deployment": false,
+    "device": false,
+    "external_security_scan": false,
+    "git_mutation": false,
+    "hosted_ci": false,
+    "llm_action": false,
+    "local_process": true,
+    "local_read": true,
+    "network": false
+  },
+  "considered_modules": [
+    "testing-feedback",
+    "delivery-git-hooks",
+    "ci-build-release-deploy",
+    "quality-evaluation",
+    "code-native-graphics",
+    "data-database-operations",
+    "security-privacy-secrets",
+    "dependencies-licences",
+    "observability-diagnostics",
+    "api-service-contracts",
+    "public-api-catalogue",
+    "device-rig-app-control"
+  ],
+  "dispositions": [
+    {
+      "destination": "TASK.md required-evidence role (proposed only)",
+      "disposition": "MERGE INTO EXISTING",
+      "evidence": [
+        "A proposed addition records the native command's proof limit in the existing required-evidence section; the command and recorded owner stay authoritative."
+      ],
+      "module_id": "testing-feedback",
+      "revisit_trigger": "Revisit if focused and closing checks need different evidence.",
+      "surviving_owner": "fixture-target-owner",
+      "unproved_boundary": "Only the target's one local unit test is proved; broader behavior remains UNPROVED."
+    },
+    {
+      "destination": "docs/engineering/git-boundary.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "The target must choose its own hook and coordinator-owned Git flow."
+      ],
+      "module_id": "delivery-git-hooks",
+      "revisit_trigger": "Revisit after an observed staged-candidate defect.",
+      "surviving_owner": "target-git-coordinator",
+      "unproved_boundary": "No Git mutation or hook installation was authorized."
+    },
+    {
+      "destination": "docs/delivery.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "Only the decision and state-machine pattern is retained."
+      ],
+      "module_id": "ci-build-release-deploy",
+      "revisit_trigger": "Revisit after local gates exist and hosted or deploy authority is explicit.",
+      "surviving_owner": "target-delivery-owner",
+      "unproved_boundary": "Hosted CI, release and deployment remain UNPROVED."
+    },
+    {
+      "destination": "docs/quality.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "No product-specific quality metric has yet changed a decision."
+      ],
+      "module_id": "quality-evaluation",
+      "revisit_trigger": "Revisit when a named quality signal changes an accepted choice.",
+      "surviving_owner": "target-quality-owner",
+      "unproved_boundary": "External quality services and product quality remain UNPROVED."
+    },
+    {
+      "destination": "docs/system-map.md",
+      "disposition": "MERGE INTO EXISTING",
+      "evidence": [
+        "The target already owns a code-native system-map document."
+      ],
+      "module_id": "code-native-graphics",
+      "revisit_trigger": "Delete diagrams that stop changing engineering decisions.",
+      "surviving_owner": "target-system-map",
+      "unproved_boundary": "Rendered graphics were not generated in this structural fixture."
+    },
+    {
+      "destination": "docs/data-boundary.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "Only migration and rollback questions are retained."
+      ],
+      "module_id": "data-database-operations",
+      "revisit_trigger": "Revisit after a target database and non-production fake are owned.",
+      "surviving_owner": "target-data-owner",
+      "unproved_boundary": "Database connection, migration and mutation remain UNPROVED."
+    },
+    {
+      "destination": "docs/security.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "Local review can define the target threat boundary without an external scan."
+      ],
+      "module_id": "security-privacy-secrets",
+      "revisit_trigger": "Revisit when a target-native local scanner or explicit external authority exists.",
+      "surviving_owner": "target-security-owner",
+      "unproved_boundary": "Secret scanning and external security scans remain UNPROVED."
+    },
+    {
+      "destination": "docs/dependencies.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "The target has no selected package manager yet."
+      ],
+      "module_id": "dependencies-licences",
+      "revisit_trigger": "Revisit after package selection creates a native lock and licence owner.",
+      "surviving_owner": "target-dependency-owner",
+      "unproved_boundary": "Dependency freshness, licences and supply-chain state remain UNPROVED."
+    },
+    {
+      "destination": "docs/diagnostics.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "Only redaction and evidence-boundary questions are retained."
+      ],
+      "module_id": "observability-diagnostics",
+      "revisit_trigger": "Revisit when a concrete failure requires a target-owned signal.",
+      "surviving_owner": "target-diagnostics-owner",
+      "unproved_boundary": "Telemetry providers and production diagnostics remain UNPROVED."
+    },
+    {
+      "destination": "docs/api-boundary.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "Contract questions are useful without contacting a live service."
+      ],
+      "module_id": "api-service-contracts",
+      "revisit_trigger": "Revisit after a target-native local contract test exists.",
+      "surviving_owner": "target-api-owner",
+      "unproved_boundary": "Live API authentication and behavior remain UNPROVED."
+    },
+    {
+      "destination": "docs/external-services.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "Potential external services are inventory only."
+      ],
+      "module_id": "public-api-catalogue",
+      "revisit_trigger": "Revisit when current official terms and a target decision require research.",
+      "surviving_owner": "target-integration-owner",
+      "unproved_boundary": "Network availability, terms, quotas, privacy and service behavior remain UNPROVED."
+    },
+    {
+      "destination": "docs/device-boundary.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "The simulator-first lease, evidence and recovery pattern is retained."
+      ],
+      "module_id": "device-rig-app-control",
+      "revisit_trigger": "Revisit only with a named rig holder and explicit live authority.",
+      "surviving_owner": "target-device-owner",
+      "unproved_boundary": "Simulation is locally fake-proved; live device, app and LLM action remain UNPROVED."
+    }
+  ],
+  "live_boundary": {
+    "live": "UNPROVED",
+    "refused_actions": [
+      "GIT_MUTATION",
+      "NETWORK_OR_PUBLIC_API",
+      "CREDENTIAL_OR_ACCOUNT_ACCESS",
+      "HOSTED_CI",
+      "EXTERNAL_SECURITY_SCAN",
+      "DATABASE_MUTATION",
+      "DEPLOYMENT_OR_PUBLICATION",
+      "DEVICE_OR_SIMULATOR_CONTROL",
+      "APP_OR_LLM_ACTION"
+    ],
+    "simulation": "PROVED_BY_LOCAL_FAKES"
+  },
+  "schema_version": 1,
+  "selection_id": "zero-context-outsider-all-modules",
+  "target": "synthetic-hardware-free-project"
+}

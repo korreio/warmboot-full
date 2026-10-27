@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "lane_id": "architecture",
+  "author": "architecture-risk-researcher",
+  "scope": "Identify architecture boundaries, failure risks, privacy constraints, and cheapest valid evidence.",
+  "status": "PROVED",
+  "local_inputs": [
+    {
+      "path": "acceptance/fixtures/kickoff-package/coordination.json",
+      "snapshot": "2026-07-31 fixture objective",
+      "state": "DIRECT",
+      "evidence": "The requested system is local and dependency-light, with no authorized external effects."
+    },
+    {
+      "path": "WARMBOOT.md",
+      "snapshot": "toolkit candidate under acceptance",
+      "state": "DIRECT",
+      "evidence": "The core requires hazard-first evidence and honest UNPROVED/BLOCKED boundaries."
+    }
+  ],
+  "findings": [
+    "A pure indexing boundary plus a thin command adapter keeps behavior independently testable.",
+    "Accidental file overwrite and unintended data egress are the primary privacy and recovery hazards."
+  ],
+  "recommendations": [
+    "Keep all inputs and outputs local and require explicit output paths with fail-closed conflict handling.",
+    "Prove pure behavior before adding filesystem integration."
+  ],
+  "unproved_boundary": null
+}

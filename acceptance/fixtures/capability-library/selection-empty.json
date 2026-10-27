@@ -1,0 +1,20 @@
+{
+  "authority": {
+    "credentials": false,
+    "database_mutation": false,
+    "deployment": false,
+    "device": false,
+    "external_security_scan": false,
+    "git_mutation": false,
+    "hosted_ci": false,
+    "llm_action": false,
+    "local_process": true,
+    "local_read": true,
+    "network": false
+  },
+  "considered_modules": [],
+  "dispositions": [],
+  "schema_version": 1,
+  "selection_id": "empty-default",
+  "target": "synthetic-local-project"
+}

@@ -1,0 +1,36 @@
+{
+  "folders": [
+    {
+      "name": "Label Normalizer",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/__pycache__": true
+    }
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "test: closing suite",
+        "type": "shell",
+        "command": "python3 -m unittest discover -s tests -v",
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "check: compile",
+        "type": "shell",
+        "command": "python3 -m compileall -q src tests",
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "problemMatcher": []
+      }
+    ]
+  }
+}

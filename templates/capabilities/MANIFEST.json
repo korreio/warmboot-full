@@ -1,0 +1,265 @@
+{
+  "schema_version": 1,
+  "library_id": "agent-warmboot-optional-capabilities",
+  "authority": "DISCOVERY_ONLY_NOT_TARGET_POLICY_OR_AUTHORIZATION",
+  "always_loaded": false,
+  "auto_installed": false,
+  "default_selection": [],
+  "requires": [],
+  "related_modules_are_navigation_only": true,
+  "manifest_self_inventory": "EXCLUDED_TO_AVOID_RECURSIVE_HASH; validator requires this one MANIFEST.json in addition to every listed file",
+  "allowed_dispositions": [
+    "ADOPT",
+    "MERGE INTO EXISTING",
+    "CITE ONLY",
+    "OMIT"
+  ],
+  "files": [
+    {
+      "path": "README.md",
+      "kind": "index",
+      "sha256": "d51a5cbde9043300b686909f5e2d5f405b3807be61d224e88bf133ac8908ccf1",
+      "bytes": 3725,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [],
+      "hazards": [
+        "authority-confusion",
+        "accidental-default-install"
+      ],
+      "source_refs": []
+    },
+    {
+      "path": "testing-feedback.md",
+      "kind": "module",
+      "module_id": "testing-feedback",
+      "sha256": "af8d2bba8e3e1c609193b96e94c3d17fb96033903684c0171f5979fb4fa98aab",
+      "bytes": 3788,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "ci-build-release-deploy",
+        "quality-evaluation",
+        "device-rig-app-control"
+      ],
+      "hazards": [
+        "false-proof",
+        "shared-fixture-mutation",
+        "sensitive-test-output"
+      ]
+    },
+    {
+      "path": "delivery-git-hooks.md",
+      "kind": "module",
+      "module_id": "delivery-git-hooks",
+      "sha256": "2a61fa94ad8410410c9086177172599f65ec31e8758b689ddb04e2ea926cdbad",
+      "bytes": 2612,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "testing-feedback",
+        "security-privacy-secrets",
+        "ci-build-release-deploy"
+      ],
+      "hazards": [
+        "git-authority-escalation",
+        "index-mutation",
+        "hook-gate-divergence"
+      ]
+    },
+    {
+      "path": "ci-build-release-deploy.md",
+      "kind": "module",
+      "module_id": "ci-build-release-deploy",
+      "sha256": "194565c3f1a6d518dea5beadb3918e28be208869335cd1eb651ff36eaa457f0e",
+      "bytes": 2625,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "testing-feedback",
+        "observability-diagnostics"
+      ],
+      "hazards": [
+        "external-mutation",
+        "credential-use",
+        "release-identity-drift",
+        "hosted-cost"
+      ]
+    },
+    {
+      "path": "quality-evaluation.md",
+      "kind": "module",
+      "module_id": "quality-evaluation",
+      "sha256": "e3c6a6e212da62063aaa6f623b17d0eb7900dc4665f7fb5904e0134266b58a81",
+      "bytes": 2379,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "testing-feedback",
+        "code-native-graphics",
+        "observability-diagnostics"
+      ],
+      "hazards": [
+        "metric-substitution",
+        "sensitive-artifact",
+        "benchmark-tax"
+      ]
+    },
+    {
+      "path": "code-native-graphics.md",
+      "kind": "module",
+      "module_id": "code-native-graphics",
+      "sha256": "4187a71d900b18831beb1516c5a8ff421d3fce34d7506df97aa77b0d338e0c05",
+      "bytes": 2362,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "quality-evaluation",
+        "api-service-contracts"
+      ],
+      "hazards": [
+        "private-topology-disclosure",
+        "generated-source-drift",
+        "semantic-misrepresentation"
+      ]
+    },
+    {
+      "path": "data-database-operations.md",
+      "kind": "module",
+      "module_id": "data-database-operations",
+      "sha256": "330721d020c9a6095085e6d22c8f3bdc3058c366d79f8603dfb5b85aef77e62b",
+      "bytes": 2594,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "security-privacy-secrets",
+        "observability-diagnostics",
+        "api-service-contracts"
+      ],
+      "hazards": [
+        "data-loss",
+        "privacy-disclosure",
+        "wrong-environment",
+        "irreversible-migration"
+      ]
+    },
+    {
+      "path": "security-privacy-secrets.md",
+      "kind": "module",
+      "module_id": "security-privacy-secrets",
+      "sha256": "4c4f3d174aaed0cf9b8ee1100f9588b21df6155ff39550e0031b1bf1a5e10d07",
+      "bytes": 2598,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "dependencies-licences",
+        "data-database-operations"
+      ],
+      "hazards": [
+        "secret-disclosure",
+        "personal-data-disclosure",
+        "unauthorized-external-scan"
+      ]
+    },
+    {
+      "path": "dependencies-licences.md",
+      "kind": "module",
+      "module_id": "dependencies-licences",
+      "sha256": "37206e4737509b93ee18c93b723861fbde767d7f696b277b7149a8455dd9bf44",
+      "bytes": 2491,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "security-privacy-secrets",
+        "ci-build-release-deploy"
+      ],
+      "hazards": [
+        "unknown-licence",
+        "supply-chain-compromise",
+        "lockfile-drift",
+        "private-registry-disclosure"
+      ]
+    },
+    {
+      "path": "observability-diagnostics.md",
+      "kind": "module",
+      "module_id": "observability-diagnostics",
+      "sha256": "1213adc3180e25af043863a379a31c3460061d61170b377f80c7ac48468a3c95",
+      "bytes": 2588,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "security-privacy-secrets",
+        "quality-evaluation",
+        "ci-build-release-deploy"
+      ],
+      "hazards": [
+        "telemetry-disclosure",
+        "consent-violation",
+        "service-dependency",
+        "cost-overrun"
+      ]
+    },
+    {
+      "path": "api-service-contracts.md",
+      "kind": "module",
+      "module_id": "api-service-contracts",
+      "sha256": "6486b7945616f527bec042ef6166d432eb5d28fc5f45b0729c6ada68a93bfadb",
+      "bytes": 2546,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "public-api-catalogue",
+        "data-database-operations",
+        "testing-feedback"
+      ],
+      "hazards": [
+        "contract-drift",
+        "unsafe-retry",
+        "credential-use",
+        "sensitive-payload-capture"
+      ]
+    },
+    {
+      "path": "public-api-catalogue.md",
+      "kind": "module",
+      "module_id": "public-api-catalogue",
+      "sha256": "cdaf5cb7c6c0901d65815a912be139b16ffe0f6610e3d41d5559bd61f2642fdf",
+      "bytes": 2871,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "api-service-contracts",
+        "security-privacy-secrets",
+        "observability-diagnostics"
+      ],
+      "hazards": [
+        "unauthorized-network",
+        "third-party-data-disclosure",
+        "quota-cost",
+        "terms-drift"
+      ]
+    },
+    {
+      "path": "device-rig-app-control.md",
+      "kind": "module",
+      "module_id": "device-rig-app-control",
+      "sha256": "e83909ea6d4a67ba608503e624bc37cb71a7b4facd5bca3716266952dab729c5",
+      "bytes": 2944,
+      "mode": "0644",
+      "requires": [],
+      "related_modules": [
+        "testing-feedback",
+        "security-privacy-secrets",
+        "api-service-contracts"
+      ],
+      "hazards": [
+        "physical-harm",
+        "wrong-device",
+        "lost-lease",
+        "sensitive-capture",
+        "unauthorized-llm-action"
+      ]
+    }
+  ]
+}

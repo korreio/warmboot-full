@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "objective": "Design a local dependency-light text indexing CLI before implementation.",
+  "phase": "KICKOFF_RESEARCH",
+  "status": "READY_FOR_AUTHORIZATION",
+  "research_as_of": "2026-07-31",
+  "coordinator": "kickoff-coordinator",
+  "coordinator_mode": "ORCHESTRATOR_ONLY",
+  "implementation_authorized": false,
+  "install_authorized": false,
+  "architecture_delivery_assignment": {
+    "risk_class": "HIGH_RISK_OR_DESTRUCTIVE",
+    "merged": false,
+    "safe_merge_rationale": null,
+    "challenger_cross_checks": []
+  },
+  "delegations": [
+    {
+      "lane_id": "context",
+      "owner": "context-researcher",
+      "scope": "Establish the objective, target context, constraints, authority, and explicit non-goals.",
+      "artifact": "research/context.json",
+      "independent": true,
+      "may_mutate_project": false,
+      "may_use_git": false,
+      "status": "COMPLETE",
+      "receipt": "fixture-context-lane-receipt",
+      "concern": "OBJECTIVE_CONTEXT",
+      "stage": "EXPLORATION",
+      "inputs": [
+        "objective",
+        "BOOTSTRAP.md",
+        "target instructions"
+      ]
+    },
+    {
+      "lane_id": "language",
+      "owner": "language-researcher",
+      "scope": "Compare current language/runtime options against a local dependency-light CLI.",
+      "artifact": "research/language.json",
+      "independent": true,
+      "may_mutate_project": false,
+      "may_use_git": false,
+      "status": "COMPLETE",
+      "receipt": "fixture-language-lane-receipt",
+      "concern": "CURRENT_TECHNOLOGY_LANGUAGE",
+      "stage": "EXPLORATION",
+      "inputs": [
+        "objective",
+        "current primary/official language sources"
+      ]
+    },
+    {
+      "lane_id": "stack",
+      "owner": "stack-researcher",
+      "scope": "Compare current application stack, packaging shapes, and source-backed portfolio reuse for the CLI.",
+      "artifact": "research/stack.json",
+      "independent": true,
+      "may_mutate_project": false,
+      "may_use_git": false,
+      "status": "COMPLETE",
+      "receipt": "fixture-stack-lane-receipt",
+      "concern": "CURRENT_TECHNOLOGY_STACK_PORTFOLIO",
+      "stage": "EXPLORATION",
+      "inputs": [
+        "objective",
+        "current primary/official stack sources",
+        "docs/exploration/stack-portfolio.md"
+      ]
+    },
+    {
+      "lane_id": "tooling",
+      "owner": "tooling-researcher",
+      "scope": "Compare current test, environment, and dependency tooling for the CLI.",
+      "artifact": "research/tooling.json",
+      "independent": true,
+      "may_mutate_project": false,
+      "may_use_git": false,
+      "status": "COMPLETE",
+      "receipt": "fixture-tooling-lane-receipt",
+      "concern": "CURRENT_TECHNOLOGY_TOOLING",
+      "stage": "EXPLORATION",
+      "inputs": [
+        "objective",
+        "current primary/official tooling sources"
+      ]
+    },
+    {
+      "lane_id": "architecture",
+      "owner": "architecture-risk-researcher",
+      "scope": "Identify architecture boundaries, failure risks, privacy constraints, and cheapest valid evidence.",
+      "artifact": "research/architecture.json",
+      "independent": true,
+      "may_mutate_project": false,
+      "may_use_git": false,
+      "status": "COMPLETE",
+      "receipt": "fixture-architecture-lane-receipt",
+      "concern": "ARCHITECTURE_RISK_PRIVACY",
+      "stage": "EXPLORATION",
+      "inputs": [
+        "objective",
+        "target privacy and authority boundary"
+      ]
+    },
+    {
+      "lane_id": "delivery",
+      "owner": "delivery-researcher",
+      "scope": "Design native testing, bootstrap, and package-install gates before implementation.",
+      "artifact": "research/delivery.json",
+      "independent": true,
+      "may_mutate_project": false,
+      "may_use_git": false,
+      "status": "COMPLETE",
+      "receipt": "fixture-delivery-lane-receipt",
+      "concern": "TESTING_BOOTSTRAP_PACKAGE_INSTALL",
+      "stage": "EXPLORATION",
+      "inputs": [
+        "objective",
+        "target-native command discovery",
+        "package authority boundary"
+      ]
+    },
+    {
+      "lane_id": "challenge",
+      "owner": "independent-challenger",
+      "scope": "Adversarially review the draft ADR and kickoff plan for unsupported choices, missing risk, and authority leakage.",
+      "artifact": "research/challenge.json",
+      "independent": true,
+      "may_mutate_project": false,
+      "may_use_git": false,
+      "status": "COMPLETE",
+      "receipt": "fixture-challenge-lane-receipt",
+      "concern": "INDEPENDENT_CHALLENGE_REVIEW",
+      "stage": "CHALLENGE",
+      "inputs": [
+        "technology-options-research-brief.json",
+        "technology-architecture-adr.json",
+        "kickoff-plan.json"
+      ]
+    }
+  ],
+  "synthesis_artifacts": [
+    "technology-options-research-brief.json",
+    "technology-architecture-adr.json",
+    "kickoff-plan.json"
+  ],
+  "steady_state_topology": "PROPORTIONAL_SINGLE_AGENT_DEFAULT",
+  "evidence_mode": "SYNTHETIC_SCHEMA_ONLY"
+}

@@ -1,0 +1,69 @@
+DIAGNOSTIC ONLY: this is a detailed structural/schema diagnostic for the kickoff
+artifact contract. It cannot prove minimal-prompt discovery. Use
+minimal-agent-prompt.txt for the primary live cold-start exercise.
+
+You are a fresh kickoff agent pointed at the Warmboot Full toolkit. Your
+objective is: select a current, lean language/stack/tooling architecture and
+produce a reviewed kickoff plan for <OBJECTIVE_AND_TARGET>.
+
+Read AGENTS.md or CLAUDE.md and take full ownership of kickoff. No implementation,
+package installation, Git mutation, publication, deployment, or external account
+change is authorized. During initial exploration, act only as coordinator: delegate
+these concerns through the smallest proportional set of at least two distinct
+non-coordinator research owners and do not research them yourself:
+objective/context; current language; current application stack plus portfolio reuse;
+current developer tooling; architecture/risk/privacy; and testing/bootstrap/package
+installation. Each read-only lane needs a receipt and its own evidence artifact.
+Two research owners are a floor, not a target. Add owners when risk, ambiguity, or
+specialist evidence makes another independent view useful. For destructive or
+high-risk work, architecture/risk/privacy and testing/bootstrap/operability have
+different owners. If this lower-risk diagnostic merges them, record why the merge is
+safe and require explicit challenger cross-checks of path/resource aliasing, source
+preservation, exact commands, failure injection, and platform prerequisites where
+applicable. Encode that decision in `coordination.json` as
+`architecture_delivery_assignment`: use risk class `HIGH_RISK_OR_DESTRUCTIVE` with
+separate owners and null/empty merge fields, or `LOWER_RISK` with `merged true`, a
+concrete `safe_merge_rationale`, and all five named cross-check tokens. The challenge
+artifact must repeat the exact assigned token list as completed challenger checks.
+
+For the current language, stack, and tooling lanes, cite only primary or official
+sources: every `sources` entry is `PRIMARY_OFFICIAL`; list nothing else there, and name
+any other material only in that lane's `unproved_boundary` with the lane marked
+UNPROVED. Record an as-of date, retrieved-on dates, source URLs, and decision
+evidence. The tooling/delivery result also adopts the target/community source-
+comprehension form, owner, implementation/review gates, explicit exceptions and
+untouched-debt disposition. For a coded target, record the mergeable project-role floor
+and a proportional evidence/action quality-control owner; a tiny project may merge it
+into the plan, while grades cannot self-close or replace independent challenge. The
+local context, architecture/risk/privacy, delivery, and challenge lanes
+instead cite exact local input paths, snapshots, and evidence; they do not invent web
+citations. Internet access and GitHub are not prerequisites: when required evidence
+cannot be obtained, record the affected lane as UNPROVED or BLOCKED with the exact
+boundary rather than inventing currency, local proof, or citations.
+
+Before selecting novelty, inspect the relevant source-admission guidance
+and assess the reference service baseline, generic application baseline, and a small combination against this
+objective inside the stack-and-portfolio lane itself, with evidence references for
+each assessment. Prefer reuse when it fits, but do not force it. If a new stack
+diverges, record source evidence and the objective-specific benefit and solo-maintenance cost.
+
+After exploration receipts arrive, the coordinator must synthesize a decision-ready
+`technology-options-research-brief.json`, then a draft technology/architecture ADR
+that cites and exactly carries forward the stack lane's portfolio assessments, plus
+a concrete ordered kickoff, bootstrap, package-install, and implementation plan.
+Then delegate an independent challenge of all three drafts to a distinct
+non-coordinator owner who authored none of the research or drafts. Dispose every challenge finding meaningfully in both final
+ADR and plan with exact resolution paths; DEFERRED_BLOCKED findings make the package
+BLOCKED. Do not silently author the review yourself. Keep
+`implementation_authorized false` and `install_authorized false`; use validated gate
+tokens and make the next authority gate explicit. All kickoff lanes end after
+synthesis/challenge; this is not a permanent multi-agent requirement.
+
+Write JSON artifacts only under <ABSOLUTE_OUTPUT_DIRECTORY>, using the exact
+eleven-file structure demonstrated by acceptance/fixtures/kickoff-package. Adapt its
+values to the objective; do not copy its conclusions as research. Omit its
+`evidence_mode` key, which marks only that synthetic fixture: a live package cites
+PRIMARY_OFFICIAL sources with absolute HTTPS URLs retrieved on `research_as_of`. Run
+`python3 acceptance/kickoff_oracle.py --package <ABSOLUTE_OUTPUT_DIRECTORY>` and
+report PASS or the honest BLOCKED boundary. The oracle checks evidence structure and
+cross-artifact consistency, not the quality or truth of model prose.

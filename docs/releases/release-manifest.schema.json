@@ -1,0 +1,292 @@
+{
+  "title": "Warmboot Full compact consumer release manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "manifest_kind",
+    "representation",
+    "release",
+    "digest_algorithm",
+    "record_encoding",
+    "payload_policy",
+    "payload_policy_sha256",
+    "lineage_receipts",
+    "claims",
+    "known_unproved"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "manifest_kind": {
+      "enum": [
+        "RELEASE",
+        "ILLUSTRATIVE_NON_RELEASE"
+      ]
+    },
+    "representation": {
+      "const": "COMPACT_POLICY_RECEIPT_V1"
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "identity_kind",
+        "declared_ref",
+        "payload_sha256"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "const": "CANDIDATE"
+        },
+        "identity_kind": {
+          "const": "ANNOTATED_TAG_DECLARATION_ONLY"
+        },
+        "declared_ref": {
+          "$ref": "#/$defs/short_tag"
+        },
+        "payload_sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "digest_algorithm": {
+      "const": "sha256"
+    },
+    "record_encoding": {
+      "const": "sorted(path + NUL + type + NUL + mode + NUL + sha256 + NUL + decimal_bytes + LF)"
+    },
+    "payload_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "include",
+        "exclude"
+      ],
+      "properties": {
+        "include": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/include_path"
+          }
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/exclusion"
+          }
+        }
+      }
+    },
+    "payload_policy_sha256": {
+      "$ref": "#/$defs/sha256"
+    },
+    "lineage_receipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/bound_receipt"
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "release_ready",
+        "tag_verified",
+        "remote_authenticity"
+      ],
+      "properties": {
+        "release_ready": {
+          "const": false
+        },
+        "tag_verified": {
+          "const": false
+        },
+        "remote_authenticity": {
+          "const": "UNPROVED_LOCAL_ONLY"
+        }
+      }
+    },
+    "known_unproved": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {
+          "$ref": "#/$defs/unproved_annotated_tag"
+        },
+        {
+          "$ref": "#/$defs/unproved_resolved_commit"
+        },
+        {
+          "$ref": "#/$defs/unproved_signature_authenticity"
+        },
+        {
+          "$ref": "#/$defs/unproved_remote_authenticity"
+        }
+      ],
+      "items": false
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "short_tag": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![-./])(?!refs/)(?!@$)(?!.*[./]$)(?!.*(?:^|/)\\.)(?!.*(?:^|/)[^/]*\\.(?:/|$))(?!.*(?:^|/)[^/]*\\.lock(?:/|$))(?!.*\\.\\.)(?!.*@\\{)(?!.*//)(?!.*[~^:?*\\[\\\\\\s\\x00-\\x1F\\x7F])[A-Za-z0-9._/-]+$"
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//).+$"
+    },
+    "include_path": {
+      "oneOf": [
+        {
+          "const": "."
+        },
+        {
+          "$ref": "#/$defs/path"
+        }
+      ]
+    },
+    "exclusion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "scope",
+        "reason",
+        "bound_receipt"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "scope": {
+          "enum": [
+            "FILE",
+            "SUBTREE"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bound_receipt": {
+          "$ref": "#/$defs/path"
+        }
+      }
+    },
+    "bound_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/path"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        }
+      }
+    },
+    "unproved_annotated_tag": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain",
+        "state",
+        "boundary"
+      ],
+      "properties": {
+        "domain": {
+          "const": "ANNOTATED_TAG"
+        },
+        "state": {
+          "const": "UNPROVED"
+        },
+        "boundary": {
+          "const": "No annotated tag was checked."
+        }
+      }
+    },
+    "unproved_resolved_commit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain",
+        "state",
+        "boundary"
+      ],
+      "properties": {
+        "domain": {
+          "const": "RESOLVED_COMMIT"
+        },
+        "state": {
+          "const": "UNPROVED"
+        },
+        "boundary": {
+          "const": "No resolved commit was checked."
+        }
+      }
+    },
+    "unproved_signature_authenticity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain",
+        "state",
+        "boundary"
+      ],
+      "properties": {
+        "domain": {
+          "const": "SIGNATURE_AUTHENTICITY"
+        },
+        "state": {
+          "const": "UNPROVED"
+        },
+        "boundary": {
+          "const": "No signature authenticity was checked."
+        }
+      }
+    },
+    "unproved_remote_authenticity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "domain",
+        "state",
+        "boundary"
+      ],
+      "properties": {
+        "domain": {
+          "const": "REMOTE_AUTHENTICITY"
+        },
+        "state": {
+          "const": "UNPROVED"
+        },
+        "boundary": {
+          "const": "No remote authenticity was checked."
+        }
+      }
+    }
+  },
+  "x-schema-vocabulary": "JSON Schema Draft 2020-12"
+}

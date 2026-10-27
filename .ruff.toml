@@ -1,0 +1,17 @@
+# Lint and format settings for this toolkit's own Python. Examples and fixtures are kept as
+# written: they are teaching samples and test inputs.
+line-length = 100
+target-version = "py311"
+extend-include = ["bin/warmboot"]
+extend-exclude = ["examples", "acceptance/fixtures"]
+
+[lint]
+extend-select = ["I", "D"]
+
+[lint.pydocstyle]
+convention = "pep257"
+
+[lint.per-file-ignores]
+# Tests: docstrings optional; nested `with` keeps each patched boundary visible.
+"tests/**" = ["D", "SIM117"]
+"acceptance/tests/**" = ["D", "SIM117"]

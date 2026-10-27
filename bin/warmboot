@@ -1,0 +1,1287 @@
+#!/usr/bin/env python3
+"""Create-only installer for the Warmboot agent contract: preview, apply, check.
+
+`init <target>` prints the exact directories and files an agent must review before
+anything is written; `init <target> --apply` creates them; `check <target>` compares
+what is installed against the manifest frozen at install time. The managed payload is
+the toolkit core, every route file the checkout carries, one manifest, and two
+identical loaders (`AGENTS.md`, `CLAUDE.md`) — nine files for this checkout's five
+routes.
+
+Operative invariants:
+
+- Create-only. Nothing that already exists is overwritten, replaced, truncated or
+  removed. Any conflict — differing content, a symlink, a non-regular file, an
+  unexpected path under the managed root, an unpublished stage left by an earlier run
+  — refuses the whole install before the first mutation. There is no rollback: once
+  creation starts, every path already created stays for inspection or a rerun, and a
+  preservation warning names it.
+- The target must be an absolute path to an existing directory. Descriptor-relative
+  operations reject replacement directories at validation points. Other actors must
+  not relocate opened parents during installation: a rename after validation can
+  move a directory outside the target before a write, which postflight detects only
+  afterward. Preservation warnings name recorded paths, which may have moved.
+- The payload is assembled at run time from this checkout's own `WARMBOOT.md` and
+  `routes/*.md`; only the loader text is embedded here. It never depends on
+  the target, so a preview predicts its own apply and an unchanged checkout reapplies
+  as zero creations.
+- The manifest freezes one SHA-256 per payload file. `check` compares installed
+  content against those frozen digests and never against the checkout's current core
+  or route bytes, so editing `WARMBOOT.md`, a route, or `SOURCE_REVISION` cannot fail
+  an already-installed target. The values `check` takes from the running helper rather
+  than from the manifest do gate an existing install: changing the LOADER text
+  (`incompatible managed loader`), SCHEMA_VERSION (`unsupported schema`),
+  TOOLKIT_NAME (`wrong toolkit`) or MANAGED_DIR (a managed root reported missing)
+  each turns a passing target into `FAIL`.
+- `source_revision` is self-declared metadata read from the `SOURCE_REVISION` file
+  (absent: `UNCOMMITTED`). It is informational, never authenticated, and no version
+  control system or subprocess is ever consulted.
+- The helper judges managed bytes and managed structure only. It never evaluates the
+  target's own semantics: `APPLIED` and `PASS` report managed file state, not bootstrap
+  completion, which still requires the target-owned human workspace and agent review.
+
+Host boundary: a POSIX-like platform and the Python 3.11+ standard library only, with
+no third-party dependency. Directory descriptors and device/inode checks prevent
+replacement adoption; they do not lock parent locations across syscalls.
+`O_NOFOLLOW`, `O_DIRECTORY`, `O_CLOEXEC` and `O_NONBLOCK` are best-effort hardening.
+Each is requested through `getattr` and contributes nothing on a host that lacks it.
+Only the atomic no-replace rename (`renameat2`, `renameatx_np`) fails closed when the
+host or filesystem cannot provide it. Preview, apply and `PASS` exit 0; every
+validation refusal and every `FAIL` exits 1, while command-line usage errors exit 2
+from argparse.
+"""
+
+from __future__ import annotations
+
+import argparse
+import ctypes
+import errno
+import hashlib
+import json
+import os
+import secrets
+import stat
+import sys
+from collections.abc import Iterable, Mapping
+from pathlib import Path, PurePosixPath
+from typing import NamedTuple
+
+SCHEMA_VERSION = 1
+TOOLKIT_NAME = "agent-warmboot"
+MANAGED_DIR = ".agent-warmboot"
+MANIFEST_PATH = f"{MANAGED_DIR}/manifest.json"
+MANAGED_DIRECTORIES = (MANAGED_DIR, f"{MANAGED_DIR}/routes")
+SOURCE_REVISION_MAX_BYTES = 256
+LOADER_PATHS = ("AGENTS.md", "CLAUDE.md")
+WORKSPACE_NOTICE = (
+    "NOTICE: the helper does not evaluate the required target-owned human workspace; "
+    "APPLIED or PASS is not bootstrap completion"
+)
+# Invariant: both loader paths receive these exact bytes, so either provider enters
+# through one contract. Because this is the only managed content the helper knows
+# without reading any input, it is also the only content `check` can verify against the
+# helper itself rather than against the target's own manifest.
+LOADER = """# Warmboot Loader
+
+Read `.agent-warmboot/core.md` before starting work. Use its routing rules to load
+only the relevant files from `.agent-warmboot/routes/` for the current task.
+
+This loader is managed by agent-warmboot. Keep `AGENTS.md` and `CLAUDE.md`
+identical so either provider enters through the same neutral contract.
+"""
+
+
+class WarmbootError(Exception):
+    """A user-facing validation failure."""
+
+
+class NoReplaceRenameUnavailable(WarmbootError):
+    """Raised when the host cannot atomically rename without replacement."""
+
+
+# Why: a handle carries the device and inode observed when it was opened, plus the
+# parent and name it was reached through, so validation can compare the inode with
+# what that name resolves to at that observation. A receipt records the identity and
+# observed path this run created; a later rename can make that recorded path stale.
+class DirectoryHandle(NamedTuple):
+    """An open directory descriptor with the identity it was opened at."""
+
+    fd: int
+    path: Path
+    device: int
+    inode: int
+    parent: DirectoryHandle | None = None
+    name: str | None = None
+
+
+class CreationReceipt(NamedTuple):
+    """Identity of one file or directory that this run created."""
+
+    path: Path
+    device: int
+    inode: int
+    digest: str | None = None
+    parent: DirectoryHandle | None = None
+    name: str | None = None
+
+
+def sha256(data: bytes) -> str:
+    """Return the hex SHA-256 digest of the bytes."""
+    return hashlib.sha256(data).hexdigest()
+
+
+def loads_rejecting_duplicate_keys(text: str) -> object:
+    """Decode manifest JSON strictly: no repeated object key, no non-JSON constant.
+
+    The installed manifest is the whole `check` gate, so a duplicate key must fail
+    closed here rather than resolve last-value-wins: a shadowed first block could
+    otherwise hide a tampered digest from the content comparison. The stdlib builds
+    objects bottom-up, so one ``object_pairs_hook`` covers every nesting level. The
+    raised ``ValueError`` reaches the caller's existing "invalid JSON" handling.
+    """
+
+    def object_without_duplicate_keys(pairs: list) -> dict:
+        result: dict = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(f"duplicate JSON object key: {key}")
+            result[key] = value
+        return result
+
+    def reject_non_json_constant(token: str) -> object:
+        # Why: the stdlib decoder accepts `NaN`, `Infinity` and `-Infinity` by default,
+        # but they are not JSON, so a manifest carrying one is not valid input for any
+        # other JSON reader. Raising ValueError routes it to the same "invalid JSON"
+        # failure as any other malformed manifest instead of letting a float reach the
+        # field checks that follow the parse.
+        raise ValueError(f"non-JSON constant: {token}")
+
+    return json.loads(
+        text,
+        object_pairs_hook=object_without_duplicate_keys,
+        parse_constant=reject_non_json_constant,
+    )
+
+
+def toolkit_root() -> Path:
+    """Return the checkout root that contains this helper."""
+    return Path(__file__).resolve().parent.parent
+
+
+def source_revision(root: Path) -> str:
+    """Return informational packaged metadata without consulting a VCS."""
+    # Why: the value is copied verbatim into the manifest, so it is read only from a
+    # regular file in the checkout and bounded to one printable line; unbounded or
+    # control-bearing text would travel into every installed manifest. `check` re-runs
+    # this same predicate over the recorded value but never prints the value itself.
+    # Failure: an absent file is a normal unpacked copy, not an error.
+    revision_file = root / "SOURCE_REVISION"
+    if revision_file.is_file() and not revision_file.is_symlink():
+        value = revision_file.read_text(encoding="utf-8").strip()
+        if not valid_source_revision(value):
+            raise WarmbootError(
+                "SOURCE_REVISION must contain one non-empty printable line no longer than "
+                f"{SOURCE_REVISION_MAX_BYTES} UTF-8 bytes"
+            )
+        return value
+    return "UNCOMMITTED"
+
+
+def valid_source_revision(value: object) -> bool:
+    """Return whether a value is one non-empty printable line within the size limit."""
+    return (
+        isinstance(value, str)
+        and value == value.strip()
+        and bool(value)
+        and value.isprintable()
+        and len(value.encode("utf-8")) <= SOURCE_REVISION_MAX_BYTES
+    )
+
+
+def source_payload(root: Path, _target: Path) -> dict[str, bytes]:
+    """Return the core, route and loader bytes to install, keyed by installed path."""
+    core = root / "WARMBOOT.md"
+    routes_dir = root / "routes"
+    # Why: every source must be a regular file in the checkout, never a symlink — the
+    # helper would otherwise install bytes from outside the tree it claims to copy.
+    # Failure: a missing or non-regular source refuses the run before the target is
+    # inspected at all.
+    if not core.is_file() or core.is_symlink():
+        raise WarmbootError(f"toolkit core is missing or invalid: {printable_path(core)}")
+    if not routes_dir.is_dir() or routes_dir.is_symlink():
+        raise WarmbootError(
+            f"toolkit routes directory is missing or invalid: {printable_path(routes_dir)}"
+        )
+
+    route_files = sorted(routes_dir.glob("*.md"), key=lambda path: path.name)
+    if not route_files:
+        raise WarmbootError(f"toolkit contains no route files: {printable_path(routes_dir)}")
+    if any(path.is_symlink() or not path.is_file() for path in route_files):
+        raise WarmbootError("toolkit route files must be regular files")
+
+    # Invariant: the payload is read from this checkout at run time and never depends on
+    # the target (`_target` stays unused), so a preview predicts its own apply and an
+    # unchanged checkout reapplies as zero creations. The loaders are generated from
+    # LOADER instead of copied because this checkout's own loaders address its layout,
+    # not the `.agent-warmboot/` layout an installed target gets.
+    payload: dict[str, bytes] = {f"{MANAGED_DIR}/core.md": core.read_bytes()}
+    for route in route_files:
+        payload[f"{MANAGED_DIR}/routes/{route.name}"] = route.read_bytes()
+    loader_bytes = LOADER.encode("utf-8")
+    for loader_path in LOADER_PATHS:
+        payload[loader_path] = loader_bytes
+    return payload
+
+
+def manifest_bytes(root: Path, payload: Mapping[str, bytes]) -> bytes:
+    """Return the serialized manifest for a payload."""
+    # Invariant: the digests bind payload content only. The manifest cannot hash itself,
+    # and nothing here binds file modes, timestamps, ownership, the target path or any
+    # path outside the managed set; `source_revision` rides along unauthenticated.
+    # Why: sorted keys, fixed indent and one trailing newline keep this serialization
+    # byte-stable, which is what lets an unchanged checkout reapply with no change.
+    manifest = {
+        "schema": SCHEMA_VERSION,
+        "toolkit": TOOLKIT_NAME,
+        "source_revision": source_revision(root),
+        "files": {path: sha256(data) for path, data in sorted(payload.items())},
+    }
+    return (json.dumps(manifest, indent=2, sort_keys=True) + "\n").encode("utf-8")
+
+
+def expected_install(root: Path, target: Path) -> dict[str, bytes]:
+    """Return every managed path and its bytes, manifest included."""
+    payload = source_payload(root, target)
+    payload[MANIFEST_PATH] = manifest_bytes(root, payload)
+    return dict(sorted(payload.items()))
+
+
+def validate_target_argument(raw_target: str) -> Path:
+    """Return the target as an absolute path to an existing directory, or refuse."""
+    target = Path(raw_target)
+    # Why: a relative path would resolve against the helper's own process directory
+    # rather than the reviewed target, and a create-only apply offers no undo for a
+    # mistargeted run. Failure: refuse before the target is opened or inspected.
+    if not target.is_absolute():
+        raise WarmbootError(f"target path must be absolute: {printable_path(raw_target)}")
+    if not target.exists():
+        raise WarmbootError(f"target does not exist: {printable_path(target)}")
+    if not target.is_dir():
+        raise WarmbootError(f"target is not a directory: {printable_path(target)}")
+    target = target.resolve()
+    # Why: only the filesystem root resolves to an empty name; refuse it as a target.
+    if not target.name:
+        raise WarmbootError("target must have a directory name")
+    return target
+
+
+def printable_path(value: object) -> str:
+    """Render one path or manifest value for a single line of output.
+
+    Why: managed names come from the target's manifest and filesystem, the target from
+    the caller, and route names from the checkout, so any of them can carry a newline,
+    carriage return, tab, terminal escape or undecodable OS byte (a surrogateescape
+    character). Printed raw, such a name can start or overwrite a line, for example a
+    forged `PASS` inside a `FAIL` report, or stop output on a strict UTF-8 stream.
+    Invariant: every character that is not printable, and the backslash itself, becomes
+    the escape `repr` writes for it, as in the invalid-entry line, so each message stays
+    on its own line and an escape never reads like a literal name. Printable names,
+    including ordinary Unicode, render unchanged; the lookup name is never altered.
+    """
+    return "".join(
+        character if character.isprintable() and character != "\\" else repr(character)[1:-1]
+        for character in str(value)
+    )
+
+
+def preflight_install(
+    target: Path,
+    expected: Mapping[str, bytes],
+    handles: dict[str, DirectoryHandle] | None = None,
+) -> list[str]:
+    """Validate the complete install before returning the files to create."""
+    owns_handles = handles is None
+    active_handles = handles or {"": open_directory_handle(target)}
+    try:
+        staged = preserved_root_stages_from_handle(active_handles[""])
+        if staged:
+            raise WarmbootError(
+                "preserved staged path(s) require inspection before install: "
+                + ", ".join(printable_path(name) for name in staged)
+            )
+        open_existing_managed_handles(target, active_handles)
+        extras = unexpected_managed_paths_from_handle(active_handles, expected)
+        if extras:
+            raise WarmbootError(
+                "unexpected managed path(s): "
+                + ", ".join(printable_path(relative) for relative in extras)
+            )
+
+        # Why: apply cannot roll back, so refusing here — before the first mutation — is
+        # the only all-or-nothing guarantee the helper offers. Conflicts are collected
+        # rather than raised one at a time so a single run names every blocker, and an
+        # existing loader gets its own wording because it is the project's own file and
+        # needs a merge decision, not a corruption report.
+        creates: list[str] = []
+        conflicts: list[str] = []
+        for relative, wanted in expected.items():
+            parent = parent_handle_for_relative(active_handles, relative)
+            if parent is None:
+                creates.append(relative)
+                continue
+            state, current = inspect_regular_file(
+                parent, PurePosixPath(relative).name, target / relative
+            )
+            if state == "missing":
+                creates.append(relative)
+            elif state == "symlink":
+                conflicts.append(f"{printable_path(relative)} is a symlink")
+            elif state != "regular":
+                conflicts.append(f"{printable_path(relative)} is not a regular file")
+            elif current != wanted:
+                if relative in LOADER_PATHS:
+                    conflicts.append(
+                        f"{relative} exists and is not the Warmboot loader; "
+                        "see BOOTSTRAP.md#existing-agent-instructions"
+                    )
+                else:
+                    conflicts.append(f"{printable_path(relative)} differs from the managed content")
+        if conflicts:
+            raise WarmbootError("install refused: " + "; ".join(conflicts))
+        return creates
+    finally:
+        if owns_handles:
+            close_directory_handles(active_handles.values())
+
+
+def missing_managed_directories(handles: Mapping[str, DirectoryHandle]) -> list[str]:
+    """Return the managed directories that are not present yet."""
+    return [relative for relative in MANAGED_DIRECTORIES if relative not in handles]
+
+
+def directory_open_flags() -> int:
+    """Return the flags used to open directories without following links."""
+    # Why: these flags are requested, not required — a host that lacks one degrades to
+    # 0 instead of failing. Every opened handle is confirmed to be a directory and
+    # re-matched by device/inode against the name in its parent, catching a followed or
+    # swapped symlink at validation. These checks do not lock its later location.
+    return (
+        os.O_RDONLY
+        | getattr(os, "O_DIRECTORY", 0)
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+    )
+
+
+def open_directory_handle(
+    path: Path, parent: DirectoryHandle | None = None, name: str | None = None
+) -> DirectoryHandle:
+    """Open a directory, below a held parent when given, and return its handle."""
+    try:
+        if parent is None:
+            descriptor = os.open(path, directory_open_flags())
+        else:
+            validate_directory_handle(parent)
+            if name is None or "/" in name or name in ("", ".", ".."):
+                raise WarmbootError(f"invalid relative directory name: {name!r}")
+            descriptor = os.open(name, directory_open_flags(), dir_fd=parent.fd)
+    except OSError as error:
+        raise WarmbootError(
+            f"could not open directory without following symlinks: {printable_path(path)}"
+        ) from error
+    try:
+        identity = os.fstat(descriptor)
+        if not stat.S_ISDIR(identity.st_mode):
+            raise WarmbootError(f"directory handle is not a directory: {printable_path(path)}")
+        handle = DirectoryHandle(descriptor, path, identity.st_dev, identity.st_ino, parent, name)
+        validate_directory_handle(handle)
+        return handle
+    except BaseException:
+        os.close(descriptor)
+        raise
+
+
+def validate_directory_handle(handle: DirectoryHandle) -> None:
+    """Compare held and named directory identities without locking their locations."""
+    # Why: the inode held open must match the inode visible at this name in its parent,
+    # recursively up to the target root. Failure: a move visible during validation
+    # raises; dir_fd operations never adopt a replacement. A move after validation can
+    # still put the original inode outside the target before a write, and is detected
+    # only at a later check. Installation assumes other actors do not relocate parents.
+    try:
+        opened = os.fstat(handle.fd)
+        if handle.parent is None:
+            visible = os.lstat(handle.path)
+        else:
+            validate_directory_handle(handle.parent)
+            visible = os.stat(handle.name, dir_fd=handle.parent.fd, follow_symlinks=False)
+    except OSError as error:
+        raise WarmbootError(
+            f"directory containment changed during install: {printable_path(handle.path)}"
+        ) from error
+    identities = (
+        opened.st_dev == handle.device
+        and opened.st_ino == handle.inode
+        and visible.st_dev == handle.device
+        and visible.st_ino == handle.inode
+        and stat.S_ISDIR(opened.st_mode)
+        and stat.S_ISDIR(visible.st_mode)
+    )
+    if not identities:
+        raise WarmbootError(
+            f"directory containment changed during install: {printable_path(handle.path)}"
+        )
+
+
+def close_directory_handles(handles: Iterable[DirectoryHandle]) -> None:
+    """Close each held descriptor once, newest first."""
+    closed: set[int] = set()
+    for handle in reversed(list(handles)):
+        if handle.fd not in closed:
+            try:
+                os.close(handle.fd)
+            except OSError:
+                pass
+            closed.add(handle.fd)
+
+
+def stat_identity(identity: os.stat_result) -> tuple[int, int, int, int, int, int]:
+    """Return the stat fields that identify a file and reveal its mutation."""
+    # Why: device and inode identify the file, the format bits catch a type change, and
+    # size with both nanosecond stamps catch mutation or relinking within one inode. A
+    # byte comparison is trusted only when this tuple is unchanged across it.
+    return (
+        identity.st_dev,
+        identity.st_ino,
+        stat.S_IFMT(identity.st_mode),
+        identity.st_size,
+        identity.st_mtime_ns,
+        identity.st_ctime_ns,
+    )
+
+
+def inspect_regular_file(
+    parent: DirectoryHandle, name: str, display_path: Path
+) -> tuple[str, bytes | None]:
+    """Read one stable regular file through a held parent without following links."""
+    validate_directory_handle(parent)
+    shown = printable_path(display_path)
+    try:
+        initial = os.stat(name, dir_fd=parent.fd, follow_symlinks=False)
+    except FileNotFoundError:
+        return "missing", None
+    if stat.S_ISLNK(initial.st_mode):
+        return "symlink", None
+    if not stat.S_ISREG(initial.st_mode):
+        return "nonregular", None
+
+    # Why: O_NONBLOCK so a name swapped to a FIFO between the stat above and this open
+    # cannot block the run forever waiting for a writer; O_NOFOLLOW so a symlink swapped
+    # in is refused rather than followed. Invariant: the identity must match before the
+    # read, after the read, and at the name, so the returned bytes provably came from
+    # one stable inode and a concurrent swap can never be compared as if it were equal.
+    flags = (
+        os.O_RDONLY
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_NONBLOCK", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+    )
+    try:
+        descriptor = os.open(name, flags, dir_fd=parent.fd)
+    except OSError as error:
+        raise WarmbootError(f"file changed during inspection: {shown}") from error
+    try:
+        opened_before = os.fstat(descriptor)
+        if not stat.S_ISREG(opened_before.st_mode) or stat_identity(opened_before) != stat_identity(
+            initial
+        ):
+            raise WarmbootError(f"file changed during inspection: {shown}")
+        chunks: list[bytes] = []
+        while True:
+            chunk = os.read(descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        opened_after = os.fstat(descriptor)
+        try:
+            visible = os.stat(name, dir_fd=parent.fd, follow_symlinks=False)
+        except OSError as error:
+            raise WarmbootError(f"file changed during inspection: {shown}") from error
+        expected_identity = stat_identity(opened_before)
+        if (
+            stat_identity(opened_after) != expected_identity
+            or stat_identity(visible) != expected_identity
+        ):
+            raise WarmbootError(f"file changed during inspection: {shown}")
+        validate_directory_handle(parent)
+        return "regular", b"".join(chunks)
+    finally:
+        os.close(descriptor)
+
+
+def parent_handle_for_relative(
+    handles: Mapping[str, DirectoryHandle], relative: str
+) -> DirectoryHandle | None:
+    """Return the held handle for a managed path's parent, if any."""
+    parent_key = PurePosixPath(relative).parent.as_posix()
+    if parent_key == ".":
+        parent_key = ""
+    # Invariant: managed-file reads and writes use a parent held by this run,
+    # never a textual path walk. Missing handles return None: preflight schedules
+    # creation; mutation and validation require the handle before file operations.
+    return handles.get(parent_key)
+
+
+def open_existing_managed_handles(target: Path, handles: dict[str, DirectoryHandle]) -> None:
+    """Open each visible managed directory from its already-held parent."""
+    for relative, parent_key, name in (
+        (MANAGED_DIR, "", MANAGED_DIR),
+        (f"{MANAGED_DIR}/routes", MANAGED_DIR, "routes"),
+    ):
+        if relative in handles:
+            validate_directory_handle(handles[relative])
+            continue
+        parent = handles.get(parent_key)
+        if parent is None:
+            continue
+        validate_directory_handle(parent)
+        try:
+            identity = os.stat(name, dir_fd=parent.fd, follow_symlinks=False)
+        except FileNotFoundError:
+            continue
+        # Why: a symlink or non-directory at a managed name would redirect every later
+        # creation out of the target; refuse it rather than follow or replace it.
+        if stat.S_ISLNK(identity.st_mode):
+            raise WarmbootError(f"managed directory must not be a symlink: {relative}")
+        if not stat.S_ISDIR(identity.st_mode):
+            raise WarmbootError(f"managed directory path is not a directory: {relative}")
+        handles[relative] = open_directory_handle(target / relative, parent, name)
+
+
+def scan_directory_entries(
+    handle: DirectoryHandle, relative_prefix: str
+) -> list[tuple[str, os.stat_result]]:
+    """Return a no-follow recursive snapshot rooted at an open directory."""
+    validate_directory_handle(handle)
+    try:
+        entries = list(os.scandir(handle.fd))
+    except OSError as error:
+        raise WarmbootError(
+            f"could not inspect managed directory: {printable_path(handle.path)}"
+        ) from error
+    # Why: each entry is inspected without following links, so a symlink is reported as
+    # an unexpected managed path and is never descended into; the scan therefore cannot
+    # follow a link outside the managed tree or loop through one. Each child is opened
+    # from its held parent; concurrent parent relocation has the same boundary as writes.
+    result: list[tuple[str, os.stat_result]] = []
+    for entry in entries:
+        relative = f"{relative_prefix}/{entry.name}"
+        try:
+            identity = entry.stat(follow_symlinks=False)
+        except OSError as error:
+            raise WarmbootError(
+                f"managed path changed during inspection: {printable_path(relative)}"
+            ) from error
+        result.append((relative, identity))
+        if stat.S_ISDIR(identity.st_mode):
+            child = open_directory_handle(handle.path / entry.name, handle, entry.name)
+            try:
+                result.extend(scan_directory_entries(child, relative))
+            finally:
+                close_directory_handles([child])
+    validate_directory_handle(handle)
+    return result
+
+
+def unexpected_managed_paths_from_handle(
+    handles: Mapping[str, DirectoryHandle], expected: Mapping[str, bytes]
+) -> list[str]:
+    """Return paths under the managed root that the payload does not declare."""
+    # Why: only the managed root is policed. The target's root is the project's own
+    # space, where the helper claims exactly the two loader names and treats every other
+    # file as none of its business; under the managed root, anything the payload does
+    # not declare is an unexplained path that must be inspected before install proceeds.
+    managed = handles.get(MANAGED_DIR)
+    if managed is None:
+        return []
+    allowed = set(expected) | set(MANAGED_DIRECTORIES)
+    return sorted(
+        relative
+        for relative, _ in scan_directory_entries(managed, MANAGED_DIR)
+        if relative not in allowed
+    )
+
+
+def validate_expected_install(
+    target: Path,
+    handles: Mapping[str, DirectoryHandle],
+    expected: Mapping[str, bytes],
+) -> None:
+    """Refuse unless every managed path holds its expected bytes."""
+    failures: list[str] = []
+    for relative, wanted in expected.items():
+        parent = parent_handle_for_relative(handles, relative)
+        if parent is None:
+            failures.append(f"{printable_path(relative)} has no contained parent")
+            continue
+        state, current = inspect_regular_file(
+            parent, PurePosixPath(relative).name, target / relative
+        )
+        if state != "regular":
+            failures.append(f"{printable_path(relative)} is {state}")
+        elif current != wanted:
+            failures.append(f"{printable_path(relative)} differs from the managed content")
+    if failures:
+        raise WarmbootError("install result changed before completion: " + "; ".join(failures))
+
+
+def validate_final_install_structure(
+    handles: Mapping[str, DirectoryHandle], expected: Mapping[str, bytes]
+) -> None:
+    """Rescan every preflight/check structure boundary through held handles."""
+    for handle in handles.values():
+        validate_directory_handle(handle)
+
+    failures: list[str] = []
+    staged = preserved_root_stages_from_handle(handles[""])
+    if staged:
+        failures.append(
+            "preserved staged path(s) require inspection: "
+            + ", ".join(printable_path(name) for name in staged)
+        )
+    extras = unexpected_managed_paths_from_handle(handles, expected)
+    if extras:
+        failures.append(
+            "unexpected managed path(s): "
+            + ", ".join(printable_path(relative) for relative in extras)
+        )
+
+    for handle in handles.values():
+        validate_directory_handle(handle)
+    if failures:
+        raise WarmbootError("install result changed before completion: " + "; ".join(failures))
+
+
+def unique_staged_directory_name(final_name: str) -> str:
+    """Return a hidden, unpredictable name for staging a directory."""
+    # Why: `secrets` entropy reduces pre-creation races; exclusive mkdir and bounded
+    # retries handle occupied names. Truncation keeps the name within 255 bytes.
+    return f".{final_name[:40]}.{secrets.token_hex(12)}.create"
+
+
+def preserved_root_stages_from_handle(target: DirectoryHandle) -> list[str]:
+    """Find names reserved for unpublished managed-root directories."""
+    # Why: an unpublished stage means an earlier run's outcome is unknown, so install
+    # and check both refuse until a human has looked at it. Invariant: only the exact
+    # generated shape is claimed — this prefix, 24 hex characters, this suffix — so an
+    # unrelated file that merely looks similar is never treated as helper residue. A
+    # stage under the managed root is caught instead by the unexpected-path scan.
+    prefix = f".{MANAGED_DIR[:40]}."
+    suffix = ".create"
+    validate_directory_handle(target)
+    try:
+        names = [entry.name for entry in os.scandir(target.fd)]
+    except OSError as error:
+        raise WarmbootError(
+            f"could not inspect target directory: {printable_path(target.path)}"
+        ) from error
+    validate_directory_handle(target)
+    result: list[str] = []
+    for name in names:
+        if not name.startswith(prefix) or not name.endswith(suffix):
+            continue
+        token = name[len(prefix) : -len(suffix)]
+        if len(token) == 24 and all(character in "0123456789abcdef" for character in token):
+            result.append(name)
+    return sorted(result)
+
+
+def create_staged_directory(
+    target: Path,
+    relative: str,
+    parent: DirectoryHandle,
+    final_name: str,
+) -> tuple[DirectoryHandle, CreationReceipt]:
+    """Create privately, then atomically publish one known directory inode."""
+    # Why: 0o700 while staged keeps other ordinary OS accounts from traversing the
+    # incomplete directory; it does not exclude another actor using this account.
+    # The bounded retry guards only against an adversary occupying the name; a
+    # collision between two 96-bit tokens is not expected, and exhausting the attempts
+    # refuses rather than reusing a name.
+    staged_name: str | None = None
+    for _ in range(100):
+        candidate = unique_staged_directory_name(final_name)
+        try:
+            os.mkdir(candidate, 0o700, dir_fd=parent.fd)
+            staged_name = candidate
+            break
+        except FileExistsError:
+            continue
+    if staged_name is None:
+        raise WarmbootError(f"could not reserve staged directory for {relative}")
+
+    staged_path = parent.path / staged_name
+    staged_handle: DirectoryHandle | None = None
+    try:
+        identity = os.stat(staged_name, dir_fd=parent.fd, follow_symlinks=False)
+        if not stat.S_ISDIR(identity.st_mode):
+            raise WarmbootError(f"staged managed directory changed type: {relative}")
+        staged_handle = open_directory_handle(staged_path, parent, staged_name)
+        if staged_handle.device != identity.st_dev or staged_handle.inode != identity.st_ino:
+            raise WarmbootError(f"staged managed directory identity changed: {relative}")
+        rename_no_replace(staged_name, final_name, parent, parent)
+        published = DirectoryHandle(
+            staged_handle.fd,
+            target / relative,
+            staged_handle.device,
+            staged_handle.inode,
+            parent,
+            final_name,
+        )
+        validate_directory_handle(published)
+        # Why: the published directory must be traversable by the project's ordinary
+        # readers, so the private staging mode is not the final one. Widen only after
+        # the published inode is confirmed, and through the held descriptor rather than
+        # the path, so the mode can never land on a directory that replaced this one.
+        os.fchmod(published.fd, 0o755)
+        receipt = CreationReceipt(
+            target / relative,
+            published.device,
+            published.inode,
+            parent=parent,
+            name=final_name,
+        )
+        return published, receipt
+    except (OSError, WarmbootError) as error:
+        if staged_handle is not None:
+            close_directory_handles([staged_handle])
+        final_path = printable_path(target / relative)
+        preservation_warning(
+            f"staged directory publication is uncertain for {final_path}; "
+            f"preserved final/staged state at {final_path} or "
+            f"{printable_path(staged_path)}: {error}"
+        )
+        raise WarmbootError(f"could not publish created directory safely: {relative}") from error
+
+
+def create_managed_directories(
+    target: Path,
+    relatives: Iterable[str],
+    receipts: list[CreationReceipt],
+    handles: dict[str, DirectoryHandle],
+) -> None:
+    """Create/open managed directories through held no-follow parent handles."""
+    missing = set(relatives)
+    for relative, parent_key, name in (
+        (MANAGED_DIR, "", MANAGED_DIR),
+        (f"{MANAGED_DIR}/routes", MANAGED_DIR, "routes"),
+    ):
+        if relative in handles:
+            validate_directory_handle(handles[relative])
+            continue
+        parent = handles[parent_key]
+        validate_directory_handle(parent)
+        if relative in missing:
+            created_handle, receipt = create_staged_directory(target, relative, parent, name)
+            receipts.append(receipt)
+            handles[relative] = created_handle
+            continue
+        handles[relative] = open_directory_handle(target / relative, parent, name)
+
+
+def atomic_create(
+    destination: Path, data: bytes, parent_handle: DirectoryHandle | None = None
+) -> CreationReceipt:
+    """Create a final file directly and verify it through its held descriptor."""
+    owns_parent = parent_handle is None
+    shown = printable_path(destination)
+    parent = parent_handle or open_directory_handle(destination.parent)
+    name = destination.name
+    if name in ("", ".", "..") or "/" in name:
+        if owns_parent:
+            close_directory_handles([parent])
+        raise WarmbootError(f"invalid destination name: {name!r}")
+    # Why: O_CREAT with O_EXCL is the create-only boundary itself — an existing
+    # destination raises instead of being opened, truncated or replaced — and O_NOFOLLOW
+    # refuses a symlink planted at the name. Failure: a destination that appeared after
+    # preflight refuses the run rather than overwriting whatever now lives there.
+    flags = (
+        os.O_RDWR
+        | os.O_CREAT
+        | os.O_EXCL
+        | getattr(os, "O_NOFOLLOW", 0)
+        | getattr(os, "O_CLOEXEC", 0)
+    )
+    descriptor: int | None = None
+    created = False
+    try:
+        validate_directory_handle(parent)
+        try:
+            # Invariant: every managed file is created 0o600 and never widened,
+            # unlike the managed directories published at 0o755. The current reader
+            # model is agents and humans using one OS account; readers using other
+            # accounts need a separate permission decision. The manifest binds content,
+            # not modes, so `check` cannot detect a later permission change.
+            descriptor = os.open(name, flags, 0o600, dir_fd=parent.fd)
+        except FileExistsError as error:
+            raise WarmbootError(f"destination appeared during install: {shown}") from error
+        created = True
+        initial = os.fstat(descriptor)
+        if not stat.S_ISREG(initial.st_mode):
+            raise WarmbootError(f"created destination is not regular: {shown}")
+
+        remaining = memoryview(data)
+        while remaining:
+            written = os.write(descriptor, remaining)
+            if written <= 0:
+                raise OSError(errno.EIO, "short write", str(destination))
+            remaining = remaining[written:]
+        # Why: the bytes are read back through this same descriptor and re-matched at
+        # the name, so a receipt is never issued for content another writer replaced
+        # between the write and the check. Invariant: the flush covers this file's data
+        # only — the parent's directory entry is not flushed, so the result is claimed
+        # visible, not durable across a host crash.
+        os.fsync(descriptor)
+
+        written_identity = os.fstat(descriptor)
+        os.lseek(descriptor, 0, os.SEEK_SET)
+        chunks: list[bytes] = []
+        while True:
+            chunk = os.read(descriptor, 1024 * 1024)
+            if not chunk:
+                break
+            chunks.append(chunk)
+        opened_after = os.fstat(descriptor)
+        identity = os.stat(name, dir_fd=parent.fd, follow_symlinks=False)
+        if (
+            not stat.S_ISREG(written_identity.st_mode)
+            or stat_identity(opened_after) != stat_identity(written_identity)
+            or stat_identity(identity) != stat_identity(written_identity)
+            or b"".join(chunks) != data
+        ):
+            raise WarmbootError(f"destination changed during install: {shown}")
+        validate_directory_handle(parent)
+        return CreationReceipt(
+            destination,
+            written_identity.st_dev,
+            written_identity.st_ino,
+            sha256(data),
+            None if owns_parent else parent,
+            name,
+        )
+    except BaseException as error:
+        # Why: a create-only tool must not remove a path when something goes wrong —
+        # that path may hold another writer's content or the only evidence of the fault
+        # — so any error or interrupt after creation preserves what exists and names it.
+        # Failure: a partial file stays behind and the next apply refuses it as
+        # differing content, making recovery a human decision, not an automatic repair.
+        if created:
+            preservation_warning(
+                f"created file state is uncertain for {shown}; "
+                f"preserved the final path without cleanup: {error}"
+            )
+        raise
+    finally:
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+        if owns_parent:
+            close_directory_handles([parent])
+
+
+def preservation_warning(message: str) -> None:
+    """Print a warning that created paths were kept for inspection."""
+    # Receipts cannot track a directory renamed by another actor after observation.
+    print(
+        f"WARNING: preservation {message}; recorded paths may have moved",
+        file=sys.stderr,
+    )
+
+
+def rename_no_replace(
+    source_name: str,
+    destination_name: str,
+    source_parent: DirectoryHandle,
+    destination_parent: DirectoryHandle,
+) -> None:
+    """Atomically rename one entry without replacing an existing destination."""
+    validate_directory_handle(source_parent)
+    validate_directory_handle(destination_parent)
+    # Why: the standard library offers no no-replace rename — `os.rename` and
+    # `os.replace` silently replace an existing destination, which would break
+    # create-only and could adopt a directory another process just created at the final
+    # name — so the platform call is reached directly. Failure: a host or filesystem
+    # without it raises NoReplaceRenameUnavailable and the caller fails closed; there is
+    # no replacing fallback anywhere in this module.
+    library = ctypes.CDLL(None, use_errno=True)
+    source = os.fsencode(source_name)
+    destination = os.fsencode(destination_name)
+    function = None
+    flags = 0
+    if sys.platform == "darwin":
+        function = getattr(library, "renameatx_np", None)
+        flags = 0x00000004  # RENAME_EXCL from <sys/stdio.h>.
+    elif sys.platform.startswith("linux"):
+        function = getattr(library, "renameat2", None)
+        flags = 0x00000001  # RENAME_NOREPLACE from <linux/fs.h>.
+    if function is None:
+        raise NoReplaceRenameUnavailable("atomic no-replace rename is unavailable on this platform")
+    function.argtypes = [
+        ctypes.c_int,
+        ctypes.c_char_p,
+        ctypes.c_int,
+        ctypes.c_char_p,
+        ctypes.c_uint,
+    ]
+    function.restype = ctypes.c_int
+    ctypes.set_errno(0)
+    result = function(
+        source_parent.fd,
+        source,
+        destination_parent.fd,
+        destination,
+        flags,
+    )
+    if result == 0:
+        validate_directory_handle(source_parent)
+        validate_directory_handle(destination_parent)
+        return
+    error_number = ctypes.get_errno() or errno.EIO
+    # Why: these three values mean "this kernel or filesystem does not implement the
+    # flag", not "this rename failed"; only they may become an unavailability signal,
+    # and every other errno stays a real OSError so a genuine failure is never softened.
+    if error_number in {errno.ENOSYS, errno.EINVAL, getattr(errno, "ENOTSUP", errno.EINVAL)}:
+        raise NoReplaceRenameUnavailable("filesystem does not support atomic no-replace rename")
+    raise OSError(error_number, os.strerror(error_number), destination_name)
+
+
+def init_command(raw_target: str, apply: bool) -> int:
+    """Preview or apply the install into a target and return the exit code."""
+    target = validate_target_argument(raw_target)
+    created_directories: list[CreationReceipt] = []
+    created_files: list[CreationReceipt] = []
+    apply_started = False
+    target_handle = open_directory_handle(target)
+    handles: dict[str, DirectoryHandle] = {"": target_handle}
+    try:
+        root = toolkit_root()
+        expected = expected_install(root, target)
+        creates = preflight_install(target, expected, handles)
+        directory_creates = missing_managed_directories(handles)
+
+        if not apply:
+            print(
+                f"PREVIEW {printable_path(target)} "
+                "(agent review required; target semantics not inferred)"
+            )
+            if directory_creates or creates:
+                for relative in directory_creates:
+                    print(f"CREATE-DIR {printable_path(relative)}")
+                for relative in creates:
+                    print(f"CREATE-FILE {printable_path(relative)}")
+            else:
+                print("NO CHANGES")
+            print(WORKSPACE_NOTICE)
+            return 0
+
+        apply_started = True
+        create_managed_directories(target, directory_creates, created_directories, handles)
+        for relative in creates:
+            parent_key = PurePosixPath(relative).parent.as_posix()
+            if parent_key == ".":
+                parent_key = ""
+            parent = handles.get(parent_key)
+            if parent is None:
+                raise WarmbootError(
+                    f"no contained parent for managed file: {printable_path(relative)}"
+                )
+            created_files.append(atomic_create(target / relative, expected[relative], parent))
+        # Why: every managed file is re-read and the whole managed structure rescanned
+        # before anything is printed, so APPLIED reports observed final state rather
+        # than writes that merely returned without error.
+        validate_expected_install(target, handles, expected)
+        validate_final_install_structure(handles, expected)
+        print(
+            f"APPLIED {printable_path(target)}: {len(creates)} file(s) created; "
+            "agent remains responsible for target semantics"
+        )
+        print(WORKSPACE_NOTICE)
+        return 0
+    except BaseException as error:
+        # Why: `apply_started` separates a refusal that changed nothing from a stop
+        # after creation began; only the second can leave state behind, and that state
+        # is reported for inspection or a rerun rather than undone. The cause is
+        # re-raised, so a partial install can never reach the APPLIED line above.
+        preserved = [receipt.path for receipt in created_directories + created_files]
+        if apply_started and preserved:
+            preservation_warning(
+                "install stopped without rollback; preserved created path(s) for "
+                "inspection or rerun: "
+                + ", ".join(printable_path(path) for path in preserved)
+                + f"; cause: {error}"
+            )
+        elif apply_started:
+            preservation_warning(
+                "install stopped without rollback; preserved observed state for "
+                f"inspection or rerun; cause: {error}"
+            )
+        raise
+    finally:
+        close_directory_handles(handles.values())
+
+
+def check_command(raw_target: str) -> int:
+    """Compare an installed target with its manifest and return the exit code."""
+    target = validate_target_argument(raw_target)
+    # Why: installed content is compared against the digests frozen at install time,
+    # never against the checkout's current core or route bytes, so editing those cannot
+    # fail an installed target and "drifted" is not confused with "out of date". The
+    # boundary is narrower than it looks: the values below that come from the running
+    # helper instead of the manifest — SCHEMA_VERSION, TOOLKIT_NAME, MANAGED_DIR and
+    # the LOADER text checked at the end — do fail an existing install once changed.
+    # Failures are collected rather than raised so one run reports the whole picture.
+    failures: list[str] = []
+    handles: dict[str, DirectoryHandle] = {"": open_directory_handle(target)}
+    try:
+        staged = preserved_root_stages_from_handle(handles[""])
+        if staged:
+            failures.append(
+                "preserved staged path(s) require inspection: "
+                + ", ".join(printable_path(name) for name in staged)
+            )
+        try:
+            open_existing_managed_handles(target, handles)
+        except WarmbootError as error:
+            failures.append(str(error))
+        managed = handles.get(MANAGED_DIR)
+        parsed: object = {}
+        if managed is None:
+            failures.append(f"{MANAGED_DIR}: missing or invalid directory")
+            failures.append(f"{MANIFEST_PATH}: missing or not a regular file")
+        else:
+            manifest_state, manifest_data = inspect_regular_file(
+                managed, "manifest.json", target / MANIFEST_PATH
+            )
+            if manifest_state != "regular" or manifest_data is None:
+                failures.append(f"{MANIFEST_PATH}: missing or not a regular file")
+            else:
+                try:
+                    parsed = loads_rejecting_duplicate_keys(manifest_data.decode("utf-8"))
+                except (ValueError, RecursionError):
+                    # UnicodeDecodeError, JSONDecodeError, a duplicate key and a
+                    # non-JSON constant all subclass ValueError. RecursionError does
+                    # not: nesting deep enough to exhaust the decoder raises it, and it
+                    # must fail closed as invalid JSON rather than escape as a traceback.
+                    failures.append(f"{MANIFEST_PATH}: invalid JSON")
+
+        if not isinstance(parsed, dict):
+            failures.append(f"{MANIFEST_PATH}: top level must be an object")
+            parsed = {}
+        schema = parsed.get("schema")
+        # Why: an exact type test, not isinstance — bool subclasses int, so a manifest
+        # carrying `true` here would otherwise compare equal to schema version 1.
+        if type(schema) is not int or schema != SCHEMA_VERSION:
+            failures.append(f"{MANIFEST_PATH}: unsupported schema")
+        if parsed.get("toolkit") != TOOLKIT_NAME:
+            failures.append(f"{MANIFEST_PATH}: wrong toolkit")
+        revision = parsed.get("source_revision")
+        if not valid_source_revision(revision):
+            failures.append(f"{MANIFEST_PATH}: invalid source revision")
+
+        raw_hashes = parsed.get("files")
+        if not isinstance(raw_hashes, dict):
+            failures.append(f"{MANIFEST_PATH}: invalid file hashes")
+            raw_hashes = {}
+        # Why: the manifest is target-owned input this run did not write, so each entry
+        # must prove itself before use — a plain relative POSIX path that round-trips
+        # unchanged, representable by the host filesystem API, and a 64-character
+        # lowercase hex digest. NUL is never a path character; os.fsencode also rejects
+        # unrepresentable Unicode while preserving valid surrogateescape names. Invalid
+        # entries are refused before filesystem use. Only managed allowlist entries are
+        # read below, through held descriptors: parent identity is checked at observation
+        # points, not locked against concurrent relocation.
+        hashes: dict[str, str] = {}
+        for relative, digest in raw_hashes.items():
+            try:
+                filesystem_path = isinstance(relative, str) and b"\x00" not in os.fsencode(relative)
+            except UnicodeEncodeError:
+                filesystem_path = False
+            path = PurePosixPath(relative) if isinstance(relative, str) else PurePosixPath("/")
+            safe_path = (
+                filesystem_path
+                and isinstance(relative, str)
+                and relative == path.as_posix()
+                and not path.is_absolute()
+                and ".." not in path.parts
+                and "\\" not in relative
+            )
+            valid_digest = (
+                isinstance(digest, str)
+                and len(digest) == 64
+                and all(character in "0123456789abcdef" for character in digest)
+            )
+            if not safe_path or not valid_digest:
+                failures.append(f"{MANIFEST_PATH}: invalid managed file entry {relative!r}")
+                continue
+            hashes[relative] = digest
+
+        # Why: the helper does not fix the route set — routes are whatever the source
+        # checkout carried at install time — so check requires only the invariant core
+        # and both loaders, takes the route list from the manifest itself, and then
+        # requires the managed tree to hold exactly that set, with the unhashed manifest
+        # as the one member no digest can cover.
+        required = {
+            f"{MANAGED_DIR}/core.md",
+            "AGENTS.md",
+            "CLAUDE.md",
+        }
+        route_paths = {
+            relative
+            for relative in hashes
+            if relative.startswith(f"{MANAGED_DIR}/routes/")
+            and PurePosixPath(relative).parent.as_posix() == f"{MANAGED_DIR}/routes"
+            and relative.endswith(".md")
+        }
+        if not route_paths:
+            failures.append(f"{MANIFEST_PATH}: no managed routes")
+        allowed = required | route_paths
+        missing_entries = sorted(required - hashes.keys())
+        unexpected_entries = sorted(hashes.keys() - allowed)
+        if missing_entries:
+            failures.append(
+                f"{MANIFEST_PATH}: missing entries: "
+                + ", ".join(printable_path(relative) for relative in missing_entries)
+            )
+        if unexpected_entries:
+            failures.append(
+                f"{MANIFEST_PATH}: unexpected entries: "
+                + ", ".join(printable_path(relative) for relative in unexpected_entries)
+            )
+
+        actual_managed: set[str] = set()
+        unexpected_directories: list[str] = []
+        if managed is not None:
+            for relative, identity in scan_directory_entries(managed, MANAGED_DIR):
+                if stat.S_ISDIR(identity.st_mode):
+                    if relative != f"{MANAGED_DIR}/routes":
+                        unexpected_directories.append(relative)
+                else:
+                    actual_managed.add(relative)
+        expected_managed = {
+            relative for relative in hashes if relative.startswith(f"{MANAGED_DIR}/")
+        }
+        expected_managed.add(MANIFEST_PATH)
+        extras = sorted(actual_managed - expected_managed)
+        missing = sorted(expected_managed - actual_managed)
+        if extras:
+            failures.append(
+                "unexpected managed path(s): "
+                + ", ".join(printable_path(relative) for relative in extras)
+            )
+        if unexpected_directories:
+            failures.append(
+                "unexpected managed directory(s): "
+                + ", ".join(printable_path(relative) for relative in unexpected_directories)
+            )
+        if missing:
+            failures.append(
+                "missing managed path(s): "
+                + ", ".join(printable_path(relative) for relative in missing)
+            )
+
+        inspected: dict[str, bytes] = {}
+        for relative, recorded_hash in hashes.items():
+            # Unexpected entries have already been reported; opening them would make
+            # a managed-content check read unrelated target files for no useful proof.
+            if relative not in allowed:
+                continue
+            parent = parent_handle_for_relative(handles, relative)
+            shown = printable_path(relative)
+            if parent is None:
+                failures.append(f"{shown}: missing or not a regular file")
+                continue
+            state, data = inspect_regular_file(
+                parent, PurePosixPath(relative).name, target / relative
+            )
+            if state == "symlink":
+                failures.append(f"{shown}: symlink is not allowed")
+            elif state != "regular" or data is None:
+                failures.append(f"{shown}: missing or not a regular file")
+            else:
+                inspected[relative] = data
+                if sha256(data) != recorded_hash:
+                    failures.append(f"{shown}: content/hash mismatch")
+
+        # Why: the loaders are the only managed content the helper can judge without the
+        # manifest. Digest agreement above proves only that the target matches its own
+        # manifest; this proves the installed loaders are still the ones this helper
+        # generates, so a consistently rewritten manifest cannot hide a swapped loader.
+        loader_bytes = LOADER.encode("utf-8")
+        for loader_path in LOADER_PATHS:
+            data = inspected.get(loader_path)
+            if data is not None and data != loader_bytes:
+                failures.append(f"{loader_path}: incompatible managed loader")
+
+        for handle in handles.values():
+            validate_directory_handle(handle)
+        if failures:
+            print(f"FAIL {printable_path(target)}")
+            for failure in failures:
+                # Invariant: every path or manifest value in a failure was rendered
+                # through printable_path (or repr) when the failure was built, so
+                # each failure prints as exactly one line, even on strict UTF-8.
+                print(f"- {failure}")
+            print(WORKSPACE_NOTICE)
+            return 1
+        print(
+            f"PASS {printable_path(target)}: manifest-declared content and structure "
+            "matched for "
+            f"{len(hashes)} frozen file(s) plus the manifest; source_revision is "
+            "informational/self-declared, not authenticated; agent review remains required"
+        )
+        print(WORKSPACE_NOTICE)
+        return 0
+    finally:
+        close_directory_handles(handles.values())
+
+
+def parser() -> argparse.ArgumentParser:
+    """Return the command-line parser."""
+    result = argparse.ArgumentParser(
+        prog="warmboot",
+        description=(
+            "Mechanical copy/check aid for an agent-owned bootstrap; it does not "
+            "infer target semantics or replace existing loaders."
+        ),
+    )
+    commands = result.add_subparsers(dest="command", required=True)
+    init_parser = commands.add_parser("init", help="preview files for agent review or apply them")
+    init_parser.add_argument("target", help="absolute path to an existing project directory")
+    init_parser.add_argument(
+        "--apply", action="store_true", help="perform creation after agent review"
+    )
+    check_parser = commands.add_parser(
+        "check", help="match installed content and structure to its frozen manifest"
+    )
+    check_parser.add_argument("target", help="absolute path to an existing project directory")
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the command line and return the exit code."""
+    arguments = parser().parse_args(argv)
+    try:
+        if arguments.command == "init":
+            return init_command(arguments.target, arguments.apply)
+        return check_command(arguments.target)
+    except (OSError, WarmbootError) as error:
+        # Why: only validation refusals and host errors become a one-line FAIL; anything
+        # else keeps its traceback because it is a defect in this helper, not a refusal.
+        print(f"FAIL: {error}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

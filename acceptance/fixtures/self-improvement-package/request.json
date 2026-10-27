@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "repository": ".acceptance-work/self-improvement",
+  "objective": "Change the instruction and immutable release boundary without changing helper behavior.",
+  "change_class": "ARCHITECTURE_BOOTSTRAP_RELEASE",
+  "coordinator": "warmboot-maintainer-coordinator",
+  "baseline": {
+    "identity_kind": "ANNOTATED_TAG",
+    "identity": "agent-warmboot-v0.1.0",
+    "resolved_commit": "0123456789abcdef0123456789abcdef01234567",
+    "manifest_path": "docs/releases/agent-warmboot-v0.1.0.json",
+    "manifest_sha256": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+  },
+  "authority": {
+    "may_plan": true,
+    "may_edit": false,
+    "may_commit": false,
+    "may_publish": false,
+    "source_repositories": "READ_ONLY"
+  },
+  "handoff_path": "HANDOFF.json"
+}

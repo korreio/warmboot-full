@@ -1,0 +1,79 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  style:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.15"
+
+      - name: Lint and format check (pinned ruff)
+        run: |
+          python -m pip install --disable-pip-version-check ruff==0.17.1
+          ruff check --no-cache .
+          ruff format --check --no-cache .
+
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ["3.11", "3.15"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Helper and documentation tests
+        run: python3 -B -m unittest discover -s tests -p 'test_*.py'
+      - name: Acceptance tests
+        run: python3 -B -m unittest discover -s acceptance/tests -p 'test_*.py'
+      - name: Documentation example tests
+        run: python3 -B -m unittest discover -s examples/documentation-package/tests -p 'test_*.py'
+      - name: Example tests
+        run: |
+          python3 -B -m unittest discover -s examples/python-clean/tests -p 'test_*.py'
+          python3 -B -m unittest discover -s acceptance/fixtures/baseline/tests -p 'test_*.py'
+      - name: Fixture oracles
+        run: |
+          python3 -B acceptance/capability_oracle.py \
+            --repository . \
+            --selection acceptance/fixtures/capability-library/outsider-all-12.json \
+            --outsider \
+            --fake-cases acceptance/fixtures/capability-library/fake-decisions.json
+          python3 -B acceptance/kickoff_oracle.py --package acceptance/fixtures/kickoff-package
+          python3 -B acceptance/source_comprehension_oracle.py \
+            acceptance/fixtures/source-comprehension/accepted-consequential
+          python3 -B acceptance/self_improvement_oracle.py \
+            --package acceptance/fixtures/self-improvement-package \
+            --result acceptance/fixtures/self-improvement-package/planner-result.json
+          python3 -B acceptance/upgrade_oracle.py \
+            --package acceptance/fixtures/upgrade-package \
+            --result UPGRADE.md
+      - name: Diagram wrappers
+        run: python3 -B tools/render_mermaid_docs.py --root . --check
+      - name: Installer walkthrough from README
+        run: |
+          mkdir -p .acceptance-work/readme-demo
+          readme_target="$(pwd)/.acceptance-work/readme-demo"
+          python3 -B bin/warmboot init "$readme_target"
+          python3 -B bin/warmboot init "$readme_target" --apply
+          python3 -B bin/warmboot check "$readme_target"
+          test "$(find "$readme_target" -type f | wc -l)" -eq 9
+          ./bin/warmboot check "$readme_target"

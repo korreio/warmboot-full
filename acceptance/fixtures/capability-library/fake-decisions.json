@@ -1,0 +1,158 @@
+{
+  "cases": [
+    {
+      "authority": false,
+      "case_id": "deploy-without-authority",
+      "expected": {
+        "attempts": 0,
+        "decision": "REFUSE_AUTHORITY",
+        "live_proof": "UNPROVED",
+        "reason": "DEPLOYMENT_AUTHORITY_REQUIRED"
+      },
+      "operation": "DEPLOY",
+      "retry_limit": 0,
+      "simulation": true,
+      "status_sequence": []
+    },
+    {
+      "authority": false,
+      "case_id": "rig-without-holder-or-authority",
+      "expected": {
+        "attempts": 0,
+        "decision": "REFUSE_AUTHORITY",
+        "live_proof": "UNPROVED",
+        "reason": "DEVICE_AUTHORITY_REQUIRED"
+      },
+      "operation": "RIG_LIVE",
+      "retry_limit": 0,
+      "simulation": true,
+      "status_sequence": []
+    },
+    {
+      "authority": true,
+      "case_id": "api-401-stops",
+      "expected": {
+        "attempts": 1,
+        "decision": "STOP_AUTH_FAILURE",
+        "live_proof": "UNPROVED",
+        "reason": "AUTH_OR_CREDENTIAL_FAILURE"
+      },
+      "operation": "API_FAKE",
+      "retry_limit": 2,
+      "simulation": true,
+      "status_sequence": [
+        401
+      ]
+    },
+    {
+      "authority": true,
+      "case_id": "api-429-bounded-retry-recovers",
+      "expected": {
+        "attempts": 2,
+        "decision": "PASS_FAKE",
+        "live_proof": "UNPROVED",
+        "reason": "RECOVERED_AFTER_BOUNDED_RETRY"
+      },
+      "operation": "API_FAKE",
+      "retry_limit": 1,
+      "simulation": true,
+      "status_sequence": [
+        429,
+        200
+      ]
+    },
+    {
+      "authority": true,
+      "case_id": "api-5xx-bounded-retry-exhausted",
+      "expected": {
+        "attempts": 2,
+        "decision": "FAIL_CLOSED",
+        "live_proof": "UNPROVED",
+        "reason": "TRANSIENT_RETRY_EXHAUSTED"
+      },
+      "operation": "API_FAKE",
+      "retry_limit": 1,
+      "simulation": true,
+      "status_sequence": [
+        500,
+        503
+      ]
+    },
+    {
+      "authority": true,
+      "case_id": "api-timeout-bounded-retry-exhausted",
+      "expected": {
+        "attempts": 2,
+        "decision": "FAIL_CLOSED",
+        "live_proof": "UNPROVED",
+        "reason": "TRANSIENT_RETRY_EXHAUSTED"
+      },
+      "operation": "API_FAKE",
+      "retry_limit": 1,
+      "simulation": true,
+      "status_sequence": [
+        "TIMEOUT",
+        "TIMEOUT"
+      ]
+    },
+    {
+      "authority": true,
+      "case_id": "api-malformed-fails-closed",
+      "expected": {
+        "attempts": 1,
+        "decision": "FAIL_CLOSED",
+        "live_proof": "UNPROVED",
+        "reason": "MALFORMED_RESPONSE"
+      },
+      "operation": "API_FAKE",
+      "retry_limit": 2,
+      "simulation": true,
+      "status_sequence": [
+        "MALFORMED"
+      ]
+    },
+    {
+      "authority": false,
+      "case_id": "database-mutation-without-authority",
+      "expected": {
+        "attempts": 0,
+        "decision": "REFUSE_AUTHORITY",
+        "live_proof": "UNPROVED",
+        "reason": "DATABASE_MUTATION_AUTHORITY_REQUIRED"
+      },
+      "operation": "DATABASE_MUTATION",
+      "retry_limit": 0,
+      "simulation": true,
+      "status_sequence": []
+    },
+    {
+      "authority": false,
+      "case_id": "hosted-ci-without-authority",
+      "expected": {
+        "attempts": 0,
+        "decision": "REFUSE_AUTHORITY",
+        "live_proof": "UNPROVED",
+        "reason": "HOSTED_CI_AUTHORITY_REQUIRED"
+      },
+      "operation": "HOSTED_CI",
+      "retry_limit": 0,
+      "simulation": true,
+      "status_sequence": []
+    },
+    {
+      "authority": false,
+      "case_id": "external-security-scan-without-authority",
+      "expected": {
+        "attempts": 0,
+        "decision": "REFUSE_AUTHORITY",
+        "live_proof": "UNPROVED",
+        "reason": "EXTERNAL_SECURITY_SCAN_AUTHORITY_REQUIRED"
+      },
+      "operation": "EXTERNAL_SECURITY_SCAN",
+      "retry_limit": 0,
+      "simulation": true,
+      "status_sequence": []
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,13 @@
+Read `AGENTS.md` or `CLAUDE.md`. Take full ownership of planning the existing-consumer
+upgrade in `acceptance/fixtures/upgrade-package/request.json`; follow `UPGRADING.md`.
+
+This is context-clean and planning-only. Compare the immutable old/new compact
+manifests and release notes with the frozen target receipt, adoption, native owners,
+required workspace, declared dirt, helper evidence and stale handoff. Do not edit,
+run Git, checkpoint, install, contact remotes, or publish. Write one compact
+`UPGRADE.md`: the eleven-key `safety_receipt`, one row for each applicable material
+change, inspected-only irrelevant material, and the conditional migration/rollback/
+proof/review/recovery path. Stop at `BLOCKED_BEFORE_MUTATION` before real mutation.
+The structured receipt cannot override current user or repository authority. Review
+the whole record independently and reject contradictory prose even if the bounded
+parser passes; do not solve that human/agent review boundary with NLP.

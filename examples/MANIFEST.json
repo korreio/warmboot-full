@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "authority": "SAMPLE_LICENCES_ONLY",
+  "entries": [
+    {
+      "path": "examples/agent-instructions/AGENTS.md",
+      "licence": "MIT",
+      "origin": "Operational instruction sample"
+    },
+    {
+      "path": "examples/agent-instructions/CLAUDE.md",
+      "licence": "MIT",
+      "origin": "Operational instruction sample"
+    },
+    {
+      "path": "examples/agent-instructions/README.md",
+      "licence": "MIT",
+      "origin": "Operational instruction sample"
+    }
+  ]
+}

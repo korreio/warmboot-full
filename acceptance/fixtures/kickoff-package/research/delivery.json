@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "lane_id": "delivery",
+  "author": "delivery-researcher",
+  "scope": "Design native testing, bootstrap, and package-install gates before implementation.",
+  "status": "PROVED",
+  "local_inputs": [
+    {
+      "path": "acceptance/kickoff-agent-prompt.txt",
+      "snapshot": "2026-07-31 kickoff authority contract",
+      "state": "DIRECT",
+      "evidence": "Kickoff must produce testing, bootstrap, and package-install decisions before implementation authority."
+    },
+    {
+      "path": "acceptance/fixtures/kickoff-package/coordination.json",
+      "snapshot": "2026-07-31 authority gate",
+      "state": "DIRECT",
+      "evidence": "Package installation and implementation are not yet authorized."
+    }
+  ],
+  "findings": [
+    "Bootstrap must first create one red behavior test and the smallest package skeleton.",
+    "The package-install phase is a deliberate no-op unless a reproduced dependency need changes the ADR."
+  ],
+  "recommendations": [
+    "Order kickoff, bootstrap, package decision, and implementation as separate stop boundaries.",
+    "Require native red/green test evidence and independent review before a local checkpoint."
+  ],
+  "unproved_boundary": null
+}

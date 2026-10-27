@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "mode": "PLANNING_ONLY_NON_MUTATING",
+  "objective": "Change the instruction and immutable release boundary without changing helper behavior.",
+  "repository": ".acceptance-work/self-improvement",
+  "baseline": {
+    "identity_kind": "ANNOTATED_TAG",
+    "identity": "agent-warmboot-v0.1.0",
+    "resolved_commit": "0123456789abcdef0123456789abcdef01234567",
+    "manifest_path": "docs/releases/agent-warmboot-v0.1.0.json",
+    "manifest_sha256": "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "state": "IMMUTABLE_BASELINE"
+  },
+  "authority": {
+    "may_plan": true,
+    "may_edit": false,
+    "may_commit": false,
+    "may_publish": false,
+    "source_repositories": "READ_ONLY"
+  },
+  "topology": {
+    "classification": "PROPORTIONAL_EXPLORATION_REQUIRED",
+    "coordinator": "warmboot-maintainer-coordinator",
+    "coordinator_role": "ORCHESTRATOR_ONLY_SYNTHESIS_ONLY",
+    "git_release_holder": "warmboot-maintainer-coordinator",
+    "exploration_concern_owners": {
+      "objective_context": "context-language-tooling-owner",
+      "language_runtime": "context-language-tooling-owner",
+      "stack_portfolio": "stack-architecture-owner",
+      "tooling": "context-language-tooling-owner",
+      "architecture_risk_privacy": "stack-architecture-owner",
+      "testing_bootstrap_release": "testing-bootstrap-release-owner"
+    },
+    "exploration_owners": [
+      "context-language-tooling-owner",
+      "stack-architecture-owner",
+      "testing-bootstrap-release-owner"
+    ],
+    "challenger": "independent-non-author-challenger"
+  },
+  "required_context": [
+    "MAINTAINING.md",
+    "ROLE-INDEX.md",
+    "docs/maintainer-system-map.md",
+    "docs/engineering-standards.md",
+    "docs/testing.md",
+    "docs/invariants.md",
+    "docs/adoption-disposition.md",
+    "docs/adr/",
+    "docs/plans/warmboot-build-plan.md",
+    "CHANGELOG.md",
+    "BUGFIXES.md",
+    "docs/release.md"
+  ],
+  "evidence": {
+    "baseline_checkout": "SEPARATE_TEMP_CLEAN",
+    "candidate_checkout": "SEPARATE_TEMP_CLEAN",
+    "deterministic_suite": "REQUIRED",
+    "cold_before_agent": "BRAND_NEW_CONTEXT_CLEAN",
+    "cold_after_agent": "DIFFERENT_BRAND_NEW_CONTEXT_CLEAN",
+    "recovery_resumer": "DISTINCT_FRESH_AGENT",
+    "independent_review": "REQUIRED_ON_UNCHANGED_CANDIDATE",
+    "runtime_claim": "UNPROVED_NOT_RUN"
+  },
+  "checkpoint_publication": {
+    "local_checkpoint_holder": "warmboot-maintainer-coordinator",
+    "checkpoint_state": "NOT_AUTHORIZED_IN_PLANNING_DRY_RUN",
+    "remote_authority": "EXPLICIT_USER_AUTHORIZATION_REQUIRED",
+    "may_publish": false
+  },
+  "recovery": {
+    "handoff_path": "HANDOFF.json",
+    "source_path": "candidate-input.txt",
+    "claimed_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "actual_sha256": "03d6cd849b8665b2ddc676cf9a76dc195b44fc8327754dbfa414551c1a046f99",
+    "freshness": "STALE",
+    "next_action": "RERUN_NOW",
+    "authority_renewed": false
+  },
+  "next_action": "DELEGATE_PROPORTIONAL_READ_ONLY_EXPLORATION_CONCERNS"
+}

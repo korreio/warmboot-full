@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "coordinator": "maintainer-coordinator",
+  "lanes": [
+    {
+      "id": "maintainability-research",
+      "owner": "research-owner",
+      "receipt_path": "receipts/maintainability-research.md",
+      "receipt_sha256": "f2108ce9faac3419ab37d741ebd9b2fe7dbd6d55162fe2fd912b0a32eaf486de"
+    },
+    {
+      "id": "documentation-baseline",
+      "owner": "baseline-owner",
+      "receipt_path": "receipts/documentation-baseline.md",
+      "receipt_sha256": "a31fe030b6cdc42078bd6bf31d2e021b22c40153accf30fb2c86cf791b4ddd2e"
+    }
+  ],
+  "addendum": {
+    "id": "owner-addendum-1",
+    "affected_lanes": [
+      "maintainability-research"
+    ],
+    "requirement": "Preserve human-readable rationale and documentation for collaboration at scale."
+  },
+  "disposition": {
+    "coordinator": "maintainer-coordinator",
+    "lane_actions": {
+      "maintainability-research": "RENEW",
+      "documentation-baseline": "UNAFFECTED"
+    },
+    "stopped_lane_remaining_outcome": null,
+    "next_holder": null
+  },
+  "unaffected_receipts": [
+    {
+      "lane": "documentation-baseline",
+      "receipt_path": "receipts/documentation-baseline.md",
+      "receipt_sha256": "a31fe030b6cdc42078bd6bf31d2e021b22c40153accf30fb2c86cf791b4ddd2e"
+    }
+  ],
+  "review": {
+    "reviewer": "independent-reviewer",
+    "author_ids": [
+      "maintainer-coordinator",
+      "research-owner",
+      "baseline-owner"
+    ],
+    "required": true
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "adr_id": "ADR-KICKOFF-001",
+  "status": "PROPOSED_FOR_AUTHORIZATION",
+  "date": "2026-07-31",
+  "owner": "kickoff-coordinator",
+  "objective": "Design a local dependency-light text indexing CLI before implementation.",
+  "input_lanes": [
+    "context",
+    "language",
+    "stack",
+    "tooling",
+    "architecture",
+    "delivery",
+    "challenge"
+  ],
+  "evidence_refs": [
+    "research/context.json",
+    "research/language.json",
+    "research/stack.json",
+    "research/tooling.json",
+    "research/architecture.json",
+    "research/delivery.json",
+    "research/challenge.json",
+    "technology-options-research-brief.json",
+    "docs/exploration/stack-portfolio.md"
+  ],
+  "technology_options_brief": "technology-options-research-brief.json",
+  "portfolio_reference": {
+    "path": "docs/exploration/stack-portfolio.md",
+    "status": "PROVED",
+    "as_of": "2026-07-31",
+    "evidence": "Invented reference shapes exercise the comparison schema; no real project inventory or source retrieval is claimed."
+  },
+  "reuse_policy": "PREFER_REUSE_WHEN_FIT_NOT_FORCED",
+  "portfolio_assessments": [
+    {
+      "baseline": "REFERENCE_SERVICE",
+      "fit": "FIT",
+      "objective_specific_fit": "Its dependency-light local Python boundary fits the proposed CLI objective.",
+      "solo_maintenance_cost": "Reuses an already familiar runtime and test path with no new service.",
+      "evidence_ref": "docs/exploration/stack-portfolio.md#reference-service",
+      "disposition": "REUSE"
+    },
+    {
+      "baseline": "REFERENCE_APP",
+      "fit": "NO_FIT",
+      "objective_specific_fit": "A web application boundary does not serve the local-only first slice.",
+      "solo_maintenance_cost": "Would add frontend/server/runtime maintenance without an objective need.",
+      "evidence_ref": "docs/exploration/stack-portfolio.md#reference-application",
+      "disposition": "DECLINE"
+    },
+    {
+      "baseline": "SMALL_COMBINATION",
+      "fit": "NO_FIT",
+      "objective_specific_fit": "The first slice has no boundary that benefits from combining the two baselines.",
+      "solo_maintenance_cost": "Would create two stack surfaces for one local behavior.",
+      "evidence_ref": "docs/exploration/stack-portfolio.md#how-to-compare-a-small-combination",
+      "disposition": "DECLINE"
+    }
+  ],
+  "new_stack_divergence": {
+    "selected": false,
+    "objective_specific_justification": null,
+    "solo_maintenance_cost": null,
+    "evidence_refs": []
+  },
+  "challenge_dispositions": [
+    {
+      "finding_id": "CH-001",
+      "disposition": "ACCEPTED",
+      "response": "Target runtime capability is now an explicit constraint and revisit trigger before the no-package choice can hold.",
+      "evidence_ref": "research/challenge.json",
+      "resolution_path": "technology-architecture-adr.json#constraints"
+    }
+  ],
+  "decision": {
+    "language": "Python 3 standard library",
+    "stack": "One local CLI package with explicit file and JSON boundaries",
+    "tooling": "unittest with no required third-party package",
+    "architecture": [
+      "Pure indexing logic behind a small command adapter.",
+      "Input and output stay local and deterministic.",
+      "No service, database, or network dependency in the first slice."
+    ]
+  },
+  "alternatives": [
+    {
+      "option": "Add an application framework and persistent database at kickoff",
+      "reason_not_selected": "The objective has no observed service or persistence requirement.",
+      "evidence_refs": [
+        "research/stack.json"
+      ]
+    }
+  ],
+  "constraints": [
+    "Implementation and package installation require a later explicit authorization.",
+    "The target runtime must prove the required standard-library capability before the no-package decision holds."
+  ],
+  "risks": [
+    "Large inputs may later require performance evidence and a revisited storage choice."
+  ],
+  "unproved_boundaries": [],
+  "revisit_triggers": [
+    "A measured input size fails the accepted local performance boundary.",
+    "A real consumer requires a network API or shared persistence.",
+    "The authorized target runtime lacks a required standard-library capability."
+  ]
+}

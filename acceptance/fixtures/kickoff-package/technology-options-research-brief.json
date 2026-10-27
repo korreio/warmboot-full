@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "status": "READY_FOR_ADR",
+  "as_of": "2026-07-31",
+  "owner": "kickoff-coordinator",
+  "objective": "Design a local dependency-light text indexing CLI before implementation.",
+  "input_lanes": [
+    "language",
+    "stack",
+    "tooling"
+  ],
+  "evidence_refs": [
+    "research/language.json",
+    "research/stack.json",
+    "research/tooling.json",
+    "docs/exploration/stack-portfolio.md"
+  ],
+  "options": [
+    {
+      "concern": "LANGUAGE",
+      "option": "Python 3 standard library",
+      "evidence_refs": [
+        "research/language.json"
+      ],
+      "objective_fit": "Supports a deterministic local CLI with no runtime service.",
+      "solo_maintenance_cost": "Uses one familiar runtime and its native test runner."
+    },
+    {
+      "concern": "STACK",
+      "option": "Single local CLI package with explicit JSON output",
+      "evidence_refs": [
+        "research/stack.json"
+      ],
+      "objective_fit": "Keeps the first useful behavior local and inspectable.",
+      "solo_maintenance_cost": "Avoids a server, database, and second deployment surface."
+    },
+    {
+      "concern": "TOOLING",
+      "option": "Native unittest and virtual-environment tooling",
+      "evidence_refs": [
+        "research/tooling.json"
+      ],
+      "objective_fit": "Provides deterministic verification without package installation.",
+      "solo_maintenance_cost": "Adds no third-party update stream."
+    },
+    {
+      "concern": "PORTFOLIO_REUSE",
+      "option": "Reuse the reference service Python baseline; decline the application shape and a combination",
+      "evidence_refs": [
+        "research/stack.json",
+        "docs/exploration/stack-portfolio.md"
+      ],
+      "objective_fit": "Reuses the one portfolio boundary that matches a local dependency-light CLI.",
+      "solo_maintenance_cost": "Avoids introducing an additional application runtime or maintaining two stack surfaces."
+    }
+  ],
+  "comparison_criteria": [
+    "Objective-specific capability",
+    "Offline deterministic verification",
+    "Solo-maintenance cost",
+    "Portfolio reuse without forced fit"
+  ],
+  "recommendation": "Use Python 3 standard-library boundaries, one local CLI package, and native tests; verify runtime capability before implementation.",
+  "unproved_boundaries": []
+}

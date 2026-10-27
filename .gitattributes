@@ -1,0 +1,5 @@
+# Text is stored and checked out with LF endings on every platform; images stay binary.
+* text=auto eol=lf
+*.png binary
+# Rendered from the Mermaid blocks in the Markdown files by tools/render_mermaid_docs.py.
+**/mermaid/*.png linguist-generated

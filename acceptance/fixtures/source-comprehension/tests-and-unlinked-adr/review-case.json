@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "purpose": "Reject tests and a remote ADR as substitutes for local operative rationale.",
+  "language_native_form": "Java Javadoc or file-level comment immediately before the authored type",
+  "source_path": "src/FencedLease.java",
+  "classification": "CONSEQUENTIAL",
+  "orientation_fragment": "Owns lease renewal and fenced write admission.",
+  "required_local_fragments": [
+    "A stale fencing token can never regain write authority"
+  ],
+  "exact_adr_anchor": null,
+  "changed_source_assessed": true,
+  "author": "example-writer",
+  "reviewer": "example-reviewer",
+  "verdict": "CLEAN",
+  "limitation": "This synthetic literal check is not a general source linter."
+}

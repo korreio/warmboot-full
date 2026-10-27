@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "RELEASE",
+  "representation": "COMPACT_POLICY_RECEIPT_V1",
+  "release": {
+    "id": "agent-warmboot-v2.0.0",
+    "status": "CANDIDATE",
+    "identity_kind": "ANNOTATED_TAG_DECLARATION_ONLY",
+    "declared_ref": "agent-warmboot-v2.0.0",
+    "payload_sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "digest_algorithm": "sha256",
+  "record_encoding": "sorted(path + NUL + type + NUL + mode + NUL + sha256 + NUL + decimal_bytes + LF)",
+  "payload_policy": {
+    "include": [
+      "."
+    ],
+    "exclude": [
+      {
+        "path": "docs/releases/release-manifest.json",
+        "scope": "FILE",
+        "reason": "The commit-contained manifest cannot hash its own bytes.",
+        "bound_receipt": "docs/source-refresh.md"
+      }
+    ]
+  },
+  "payload_policy_sha256": "b56327121f5f020bc5cc0b5c87c1bc2aca6a81304fc0b56c7084529d58ecb092",
+  "lineage_receipts": [
+    {
+      "path": "docs/source-refresh.md",
+      "sha256": "6666666666666666666666666666666666666666666666666666666666666666"
+    }
+  ],
+  "claims": {
+    "release_ready": false,
+    "tag_verified": false,
+    "remote_authenticity": "UNPROVED_LOCAL_ONLY"
+  },
+  "known_unproved": [
+    {
+      "domain": "ANNOTATED_TAG",
+      "state": "UNPROVED",
+      "boundary": "No annotated tag was checked."
+    },
+    {
+      "domain": "RESOLVED_COMMIT",
+      "state": "UNPROVED",
+      "boundary": "No resolved commit was checked."
+    },
+    {
+      "domain": "SIGNATURE_AUTHENTICITY",
+      "state": "UNPROVED",
+      "boundary": "No signature authenticity was checked."
+    },
+    {
+      "domain": "REMOTE_AUTHENTICITY",
+      "state": "UNPROVED",
+      "boundary": "No remote authenticity was checked."
+    }
+  ]
+}

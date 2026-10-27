@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "lane_id": "stack",
+  "author": "stack-researcher",
+  "scope": "Compare current application stack, packaging shapes, and source-backed portfolio reuse for the CLI.",
+  "as_of": "2026-07-31",
+  "status": "PROVED",
+  "sources": [
+    {
+      "source_kind": "SYNTHETIC",
+      "publisher": "Python Packaging Authority",
+      "url": "research/stack.json#invented-source-1",
+      "retrieved_on": "2026-07-31",
+      "evidence": "Invented schema-validation input; no live source retrieval or primary-source proof."
+    }
+  ],
+  "options": [
+    {
+      "name": "Single local CLI package with JSON output",
+      "strengths": [
+        "Keeps the first boundary inspectable without a service or database."
+      ],
+      "risks": [
+        "A later integration requirement may justify a separate adapter boundary."
+      ],
+      "evidence_refs": [
+        "research/stack.json#invented-source-1"
+      ]
+    }
+  ],
+  "recommendation": "Start with one local CLI package and explicit file inputs/outputs.",
+  "decision_impact": "Defer services and persistence until an observed use case requires them.",
+  "unproved_boundary": null,
+  "portfolio_reference": {
+    "path": "docs/exploration/stack-portfolio.md",
+    "status": "PROVED",
+    "as_of": "2026-07-31",
+    "evidence": "Invented reference shapes exercise the comparison schema; no real project inventory or source retrieval is claimed."
+  },
+  "reuse_policy": "PREFER_REUSE_WHEN_FIT_NOT_FORCED",
+  "portfolio_assessments": [
+    {
+      "baseline": "REFERENCE_SERVICE",
+      "fit": "FIT",
+      "objective_specific_fit": "Its dependency-light local Python boundary fits the proposed CLI objective.",
+      "solo_maintenance_cost": "Reuses an already familiar runtime and test path with no new service.",
+      "evidence_ref": "docs/exploration/stack-portfolio.md#reference-service",
+      "disposition": "REUSE"
+    },
+    {
+      "baseline": "REFERENCE_APP",
+      "fit": "NO_FIT",
+      "objective_specific_fit": "A web application boundary does not serve the local-only first slice.",
+      "solo_maintenance_cost": "Would add frontend/server/runtime maintenance without an objective need.",
+      "evidence_ref": "docs/exploration/stack-portfolio.md#reference-application",
+      "disposition": "DECLINE"
+    },
+    {
+      "baseline": "SMALL_COMBINATION",
+      "fit": "NO_FIT",
+      "objective_specific_fit": "The first slice has no boundary that benefits from combining the two baselines.",
+      "solo_maintenance_cost": "Would create two stack surfaces for one local behavior.",
+      "evidence_ref": "docs/exploration/stack-portfolio.md#how-to-compare-a-small-combination",
+      "disposition": "DECLINE"
+    }
+  ]
+}

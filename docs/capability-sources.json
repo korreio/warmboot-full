@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "status": "TOOLKIT_LOCAL_DESIGN_REFERENCES",
+  "authority": "DESIGN_AND_RIGHTS_EVIDENCE_ONLY",
+  "sources": [
+    {
+      "id": "toolkit-design",
+      "kind": "TOOLKIT-LOCAL",
+      "path": "docs/capability-design.md",
+      "sha256": "ecb19d00261c685af8ee11a40fe257164f9c39c50ba88de0e2697e247d14c320",
+      "rights": {
+        "spdx": "MIT"
+      }
+    }
+  ],
+  "entries": [
+    {
+      "id": "testing-feedback-design",
+      "module_id": "testing-feedback",
+      "source_id": "toolkit-design",
+      "rationale": "Testing and fast feedback has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "delivery-git-hooks-design",
+      "module_id": "delivery-git-hooks",
+      "source_id": "toolkit-design",
+      "rationale": "Delivery and Git hooks has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "ci-build-release-deploy-design",
+      "module_id": "ci-build-release-deploy",
+      "source_id": "toolkit-design",
+      "rationale": "CI, build, release and deployment has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "quality-evaluation-design",
+      "module_id": "quality-evaluation",
+      "source_id": "toolkit-design",
+      "rationale": "Quality evaluation has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "code-native-graphics-design",
+      "module_id": "code-native-graphics",
+      "source_id": "toolkit-design",
+      "rationale": "Code-native diagrams and graphics has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "data-database-operations-design",
+      "module_id": "data-database-operations",
+      "source_id": "toolkit-design",
+      "rationale": "Data and database operations has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "security-privacy-secrets-design",
+      "module_id": "security-privacy-secrets",
+      "source_id": "toolkit-design",
+      "rationale": "Security, privacy and secrets has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "dependencies-licences-design",
+      "module_id": "dependencies-licences",
+      "source_id": "toolkit-design",
+      "rationale": "Dependencies, licences and supply chain has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "observability-diagnostics-design",
+      "module_id": "observability-diagnostics",
+      "source_id": "toolkit-design",
+      "rationale": "Observability and diagnostics has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "api-service-contracts-design",
+      "module_id": "api-service-contracts",
+      "source_id": "toolkit-design",
+      "rationale": "API and service contracts has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "public-api-catalogue-design",
+      "module_id": "public-api-catalogue",
+      "source_id": "toolkit-design",
+      "rationale": "Public and external API catalogue has target-owned authority and evidence boundaries described in the local rationale."
+    },
+    {
+      "id": "device-rig-app-control-design",
+      "module_id": "device-rig-app-control",
+      "source_id": "toolkit-design",
+      "rationale": "Device rig, app and LLM control has target-owned authority and evidence boundaries described in the local rationale."
+    }
+  ]
+}

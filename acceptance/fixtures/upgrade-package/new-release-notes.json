@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "release_ref": "agent-warmboot-v2.0.0",
+  "compatibility": "INCOMPATIBLE_CORE_SAFETY",
+  "changes": [
+    {"id": "U01", "path": "WARMBOOT.md", "state": "CHANGED", "old_sha256": "1111111111111111111111111111111111111111111111111111111111111111", "new_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "summary": "Core routing and safety contract changed."},
+    {"id": "U02", "path": "routes/recovery.md", "state": "ADDED", "old_sha256": null, "new_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "summary": "Recovery route added."},
+    {"id": "U03", "path": "templates/project-docs/testing.md", "state": "CHANGED", "old_sha256": "2222222222222222222222222222222222222222222222222222222222222222", "new_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "summary": "Focused/full native proof and honest limits added."},
+    {"id": "U04", "path": "examples/documentation-package/README.md", "state": "CHANGED", "old_sha256": "3333333333333333333333333333333333333333333333333333333333333333", "new_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc", "summary": "Teaching example changed."}
+  ]
+}

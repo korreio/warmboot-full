@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "receipt_id": "old-candidate-receipt",
+  "source_path": "candidate-input.txt",
+  "claimed_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+}

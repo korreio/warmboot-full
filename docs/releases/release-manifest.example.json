@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "manifest_kind": "ILLUSTRATIVE_NON_RELEASE",
+  "representation": "COMPACT_POLICY_RECEIPT_V1",
+  "release": {
+    "id": "example-only",
+    "status": "CANDIDATE",
+    "identity_kind": "ANNOTATED_TAG_DECLARATION_ONLY",
+    "declared_ref": "example-only-do-not-create",
+    "payload_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "digest_algorithm": "sha256",
+  "record_encoding": "sorted(path + NUL + type + NUL + mode + NUL + sha256 + NUL + decimal_bytes + LF)",
+  "payload_policy": {
+    "include": [
+      "."
+    ],
+    "exclude": [
+      {
+        "path": ".git",
+        "scope": "SUBTREE",
+        "reason": "Repository metadata is not consumer payload.",
+        "bound_receipt": "docs/release.md"
+      },
+      {
+        "path": "docs/releases/release-manifest.example.json",
+        "scope": "FILE",
+        "reason": "The commit-contained manifest cannot include its own bytes in its payload aggregate.",
+        "bound_receipt": "docs/release.md"
+      }
+    ]
+  },
+  "payload_policy_sha256": "19e6dce9e86e71422929fb6f1e1fc1fbf7e05c1f43a5231a97e4bd536ba6943f",
+  "lineage_receipts": [
+    {
+      "path": "LICENSING.md",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+    },
+    {
+      "path": "docs/release.md",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "claims": {
+    "release_ready": false,
+    "tag_verified": false,
+    "remote_authenticity": "UNPROVED_LOCAL_ONLY"
+  },
+  "known_unproved": [
+    {
+      "domain": "ANNOTATED_TAG",
+      "state": "UNPROVED",
+      "boundary": "No annotated tag was checked."
+    },
+    {
+      "domain": "RESOLVED_COMMIT",
+      "state": "UNPROVED",
+      "boundary": "No resolved commit was checked."
+    },
+    {
+      "domain": "SIGNATURE_AUTHENTICITY",
+      "state": "UNPROVED",
+      "boundary": "No signature authenticity was checked."
+    },
+    {
+      "domain": "REMOTE_AUTHENTICITY",
+      "state": "UNPROVED",
+      "boundary": "No remote authenticity was checked."
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "lane_id": "context",
+  "author": "context-researcher",
+  "scope": "Establish the objective, target context, constraints, authority, and explicit non-goals.",
+  "status": "PROVED",
+  "local_inputs": [
+    {
+      "path": "acceptance/fixtures/kickoff-package/coordination.json",
+      "snapshot": "2026-07-31 fixture objective",
+      "state": "DIRECT",
+      "evidence": "The objective is a local dependency-light CLI and implementation remains unauthorized."
+    },
+    {
+      "path": "BOOTSTRAP.md",
+      "snapshot": "toolkit candidate under acceptance",
+      "state": "DIRECT",
+      "evidence": "Bootstrap requires explicit ownership, preserved boundaries, native proof, and separate external authority."
+    }
+  ],
+  "findings": [
+    "The first decision is architecture selection and an authorized plan, not source creation.",
+    "Network services, accounts, persistence, and publication are outside the current objective."
+  ],
+  "recommendations": [
+    "Keep all kickoff lanes read-only and request implementation authority only after synthesis and challenge."
+  ],
+  "unproved_boundary": null
+}

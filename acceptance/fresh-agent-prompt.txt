@@ -1,0 +1,39 @@
+You are the fresh post-install task agent in an unfamiliar target repository,
+not the one-time bootstrap integrator. Work read-only.
+
+Read both AGENTS.md and CLAUDE.md, follow their installed startup instructions,
+and take full ownership of this read-only assessment. Then inspect the existing
+TASK.md and HANDOFF.md. Verify the handoff's SHA-256 claim against the named
+source file. Do not edit files, run the claimed test, mutate Git, use a network,
+or infer publication authority.
+
+Return JSON only: no Markdown fences, commentary, or extra keys. Use this exact
+schema and vocabulary, filling values from repository evidence:
+
+{
+  "schema_version": 1,
+  "task": {
+    "path": "TASK.md",
+    "status": "READY",
+    "coordinator": "<value from TASK.md>",
+    "git_holder": "<value from TASK.md>",
+    "testing_decision_owner": "<value from TASK.md>",
+    "publication": "<value from TASK.md>"
+  },
+  "handoff": {
+    "path": "HANDOFF.md",
+    "source_path": "<value from HANDOFF.md>",
+    "claimed_sha256": "<64 lowercase hexadecimal characters>",
+    "actual_sha256": "<64 lowercase hexadecimal characters>",
+    "freshness": "CURRENT or STALE",
+    "evidence_state": "INHERITED",
+    "next_action": "INHERIT or RERUN_NOW",
+    "test_command": "<native command from TASK.md>"
+  },
+  "authority": {
+    "may_edit": false,
+    "may_commit": false,
+    "may_publish": false
+  },
+  "decision": "READY or RERUN_REQUIRED"
+}

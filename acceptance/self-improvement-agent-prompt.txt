@@ -1,0 +1,11 @@
+Read `AGENTS.md` or `CLAUDE.md`. Take full ownership of planning the requested
+Warmboot Full improvement described by
+`acceptance/fixtures/self-improvement-package/request.json`.
+
+This is a context-clean, planning-only dry run. Read the repository's maintainer
+authority and the fixture handoff, but do not edit any file, run Git, create a
+checkout, contact a remote or another repository, install anything, or
+claim a live agent/runtime result. Return only the JSON planning receipt described by
+the repository context. The receipt must identify the immutable baseline, authority,
+required topology/context/evidence, local checkpoint versus publication boundary, and
+stale-handoff recovery action.

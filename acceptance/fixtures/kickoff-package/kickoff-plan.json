@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "status": "AWAITING_IMPLEMENTATION_AUTHORIZATION",
+  "owner": "kickoff-coordinator",
+  "based_on": "technology-architecture-adr.json",
+  "input_lanes": [
+    "context",
+    "language",
+    "stack",
+    "tooling",
+    "architecture",
+    "delivery",
+    "challenge"
+  ],
+  "evidence_refs": [
+    "research/context.json",
+    "research/language.json",
+    "research/stack.json",
+    "research/tooling.json",
+    "research/architecture.json",
+    "research/delivery.json",
+    "research/challenge.json",
+    "technology-options-research-brief.json"
+  ],
+  "challenge_dispositions": [
+    {
+      "finding_id": "CH-001",
+      "disposition": "ACCEPTED",
+      "response": "Bootstrap now verifies the target runtime version and required standard-library capability before package strategy acceptance.",
+      "evidence_ref": "research/challenge.json",
+      "resolution_path": "kickoff-plan.json#phases/bootstrap"
+    }
+  ],
+  "implementation_authorized": false,
+  "install_authorized": false,
+  "source_comprehension": {
+    "community_basis": "Python community docstring conventions plus this target's public/private module boundaries were inspected before adopting the rule.",
+    "target_rule_path": "docs/engineering-standards.md",
+    "owner": "future-implementation-coordinator",
+    "implementation_gate": "ASSESS_ALL_CHANGED_HUMAN_AUTHORED_SOURCE_BEFORE_HANDOFF",
+    "review_gate": "NON_AUTHOR_READS_ALL_CHANGED_AUTHORED_SOURCE_MISSING_IS_FINDING",
+    "existing_debt_disposition": "Inventory untouched source debt by consequence and assign priorities; do not silently bless it or block unrelated work without a recorded risk.",
+    "exceptions": [
+      "GENERATED_SOURCE_WITH_PROVENANCE",
+      "VENDORED_SOURCE_UNMODIFIED",
+      "PURE_MECHANICAL_REEXPORT"
+    ]
+  },
+  "quality_control": {
+    "applicability": "MERGED_SMALL_CODED_PROJECT",
+    "owner": "future-implementation-coordinator",
+    "location": "kickoff-plan.json#quality_control",
+    "concerns": [
+      "ARCHITECTURE_OWNERSHIP",
+      "SOURCE_COMPREHENSION",
+      "TESTING_EVIDENCE",
+      "SECURITY_PRIVACY_OPERATIONS_AS_APPLICABLE"
+    ],
+    "unknown_policy": "Keep unavailable evidence explicit and do not convert unknowns into passing grades.",
+    "action_rule": "Each material weakness names evidence, an owner, and the next improvement or revisit trigger.",
+    "challenge_rule": "A human owner or genuinely independent non-author challenger reviews the current assessment; a score cannot close its own finding.",
+    "automation_limit": "Automate evidence collection and regression flags only; semantic adequacy remains a human/non-author decision."
+  },
+  "phases": [
+    {
+      "id": "kickoff",
+      "owner": "kickoff-coordinator",
+      "entry_condition_tokens": [
+        "EVIDENCE_PACKAGE_VALID"
+      ],
+      "execution_state": "READY_FOR_AUTHORITY_REQUEST",
+      "implementation_authorized": false,
+      "install_authorized": false,
+      "exact_paths": [
+        "coordination.json",
+        "research/language.json",
+        "research/stack.json",
+        "research/tooling.json",
+        "technology-architecture-adr.json",
+        "kickoff-plan.json"
+      ],
+      "actions": [
+        "Validate this evidence package and request the implementation authority gate."
+      ],
+      "evidence": [
+        "python3 acceptance/kickoff_oracle.py --package <ABSOLUTE_OUTPUT_DIRECTORY>"
+      ],
+      "stop_condition": "Stop with implementation_authorized false after the authority request."
+    },
+    {
+      "id": "bootstrap",
+      "owner": "future-implementation-coordinator",
+      "entry_condition_tokens": [
+        "IMPLEMENTATION_AUTHORIZED"
+      ],
+      "execution_state": "BLOCKED_PENDING_AUTHORITY",
+      "implementation_authorized": false,
+      "install_authorized": false,
+      "exact_paths": [
+        "pyproject.toml",
+        "docs/engineering-standards.md",
+        "src/text_index/__init__.py",
+        "tests/test_index.py"
+      ],
+      "actions": [
+        "Verify the target runtime version and required standard-library capability.",
+        "Adopt the target-owned source-comprehension rule at docs/engineering-standards.md before product source.",
+        "Create only the reviewed package skeleton and one red behavior test."
+      ],
+      "evidence": [
+        "python3 --version",
+        "Inspect docs/engineering-standards.md and record its community basis, owner, implementation/review gates, exceptions, and debt disposition.",
+        "python3 -m unittest discover -s tests -v"
+      ],
+      "stop_condition": "Stop before feature implementation if the native red test does not fail for the intended reason."
+    },
+    {
+      "id": "package-install",
+      "owner": "future-implementation-coordinator",
+      "entry_condition_tokens": [
+        "IMPLEMENTATION_AUTHORIZED",
+        "BOOTSTRAP_ACCEPTED"
+      ],
+      "execution_state": "BLOCKED_PENDING_AUTHORITY",
+      "implementation_authorized": false,
+      "install_authorized": false,
+      "exact_paths": [
+        "pyproject.toml"
+      ],
+      "actions": [
+        "Install no third-party packages for the first slice."
+      ],
+      "evidence": [
+        "Inspect pyproject.toml and record the empty runtime dependency set."
+      ],
+      "stop_condition": "Stop if implementation demonstrates a dependency need and return to the ADR."
+    },
+    {
+      "id": "implementation",
+      "owner": "future-implementation-coordinator",
+      "entry_condition_tokens": [
+        "IMPLEMENTATION_AUTHORIZED",
+        "RED_TEST_ACCEPTED"
+      ],
+      "execution_state": "BLOCKED_PENDING_AUTHORITY",
+      "implementation_authorized": false,
+      "install_authorized": false,
+      "exact_paths": [
+        "src/text_index/__init__.py",
+        "tests/test_index.py"
+      ],
+      "actions": [
+        "ASSESS_ALL_CHANGED_HUMAN_AUTHORED_SOURCE_BEFORE_HANDOFF",
+        "Implement the smallest behavior that turns the accepted focused test green."
+      ],
+      "evidence": [
+        "python3 -m unittest discover -s tests -v",
+        "NON_AUTHOR_READS_ALL_CHANGED_AUTHORED_SOURCE_MISSING_IS_FINDING",
+        "Independent scoped review verdict."
+      ],
+      "stop_condition": "Stop after native green evidence and one fresh CLEAN review."
+    }
+  ],
+  "package_strategy": {
+    "action": "NO_THIRD_PARTY_PACKAGES",
+    "commands": [],
+    "packages": [],
+    "rationale": "The proposed first slice is covered by the Python standard library.",
+    "evidence_ref": "research/tooling.json",
+    "install_authorized": false,
+    "execution_state": "BLOCKED_PENDING_AUTHORITY",
+    "next_gate": "CONFIRM_NO_INSTALL_REQUIRED"
+  },
+  "authority_gate": {
+    "implementation_authorized": false,
+    "install_authorized": false,
+    "external_effects_authorized": false,
+    "required_authority_holder": "USER",
+    "next_gate": "REQUEST_IMPLEMENTATION_AUTHORIZATION"
+  },
+  "steady_state": {
+    "topology": "PROPORTIONAL_SINGLE_AGENT_DEFAULT",
+    "kickoff_research_lanes_end": true,
+    "review_rule": "Use one agent by default and add independent review or lanes only for material risk or decomposable work."
+  }
+}

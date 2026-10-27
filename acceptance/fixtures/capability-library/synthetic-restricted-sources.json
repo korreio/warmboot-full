@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "status": "SYNTHETIC_VALIDATION_INPUTS",
+  "authority": "DESIGN_AND_RIGHTS_EVIDENCE_ONLY",
+  "sources": [
+    {
+      "id": "synthetic-restricted",
+      "kind": "SYNTHETIC",
+      "path": "acceptance/fixtures/capability-library/README.md",
+      "sha256": "d4757ab4e0a490c02ed826a1d046d98f3106333e0ba4945254b94ba6538538d3",
+      "rights": {
+        "spdx": "LicenseRef-Synthetic-Restricted"
+      }
+    }
+  ],
+  "entries": [
+    {
+      "id": "testing-feedback-design",
+      "module_id": "testing-feedback",
+      "source_id": "synthetic-restricted",
+      "rationale": "Invented validation input only; these restricted rights exercise refusal and describe no actual third-party source."
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+Read AGENTS.md or CLAUDE.md, take full ownership of <OBJECTIVE>, and work only inside <ABSOLUTE_TARGET>; do not publish or make external changes.

@@ -1,0 +1,24 @@
+{
+  "folders": [
+    {"name": "consumer", "path": "."}
+  ],
+  "settings": {
+    "files.insertFinalNewline": true,
+    "python.testing.unittestEnabled": true
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "test: focused",
+        "type": "shell",
+        "command": "python3 -m unittest tests.test_contract"
+      },
+      {
+        "label": "test: full",
+        "type": "shell",
+        "command": "python3 -m unittest discover -s tests -p 'test_*.py'"
+      }
+    ]
+  }
+}

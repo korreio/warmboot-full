@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "purpose": "Accept a concise native type contract, local units and failure rationale, and an exact ADR anchor.",
+  "language_native_form": "Java Javadoc or file-level comment immediately before the authored type",
+  "source_path": "src/DeadlineBudget.java",
+  "classification": "CONSEQUENTIAL",
+  "orientation_fragment": "Coordinates the request deadline budget shared by retry attempts.",
+  "required_local_fragments": [
+    "All stored and returned durations are monotonic milliseconds",
+    "exhaustion fails closed before another attempt starts"
+  ],
+  "exact_adr_anchor": {
+    "document": "docs/adr/0001-deadline-policy.md",
+    "source_fragment": "docs/adr/0001-deadline-policy.md#monotonic-budget",
+    "heading": "## Monotonic budget"
+  },
+  "changed_source_assessed": true,
+  "author": "example-writer",
+  "reviewer": "example-reviewer",
+  "verdict": "CLEAN",
+  "limitation": "This synthetic literal check is not a general source linter."
+}

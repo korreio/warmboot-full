@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "lane_id": "language",
+  "author": "language-researcher",
+  "scope": "Compare current language/runtime options against a local dependency-light CLI.",
+  "as_of": "2026-07-31",
+  "status": "PROVED",
+  "sources": [
+    {
+      "source_kind": "SYNTHETIC",
+      "publisher": "Python Software Foundation",
+      "url": "research/language.json#invented-source-1",
+      "retrieved_on": "2026-07-31",
+      "evidence": "Invented schema-validation input; no live source retrieval or primary-source proof."
+    }
+  ],
+  "options": [
+    {
+      "name": "Python 3 standard library",
+      "strengths": [
+        "Supports a dependency-light local CLI and deterministic standard-library tests."
+      ],
+      "risks": [
+        "Runtime version availability must be checked on the target environment."
+      ],
+      "evidence_refs": [
+        "research/language.json#invented-source-1"
+      ]
+    }
+  ],
+  "recommendation": "Use Python 3 with the standard library for the first authorized slice.",
+  "decision_impact": "Avoid a runtime framework until behavior demonstrates a need.",
+  "unproved_boundary": null
+}

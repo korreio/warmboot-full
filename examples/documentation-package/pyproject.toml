@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "warmboot-label-normalizer-example"
+version = "0.1.0"
+description = "Example-only Unicode label comparison-key normalizer"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+label-normalize = "label_normalizer.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

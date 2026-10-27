@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "target": ".acceptance-work/existing-consumer",
+  "authorities": [
+    {"role": "ROOT_INSTRUCTIONS", "path": "AGENTS.md", "owner": "target-coordinator", "sha256": "0101010101010101010101010101010101010101010101010101010101010101"},
+    {"role": "SUBTREE_INSTRUCTIONS", "path": "app/AGENTS.md", "owner": "application-owner", "sha256": "0202020202020202020202020202020202020202020202020202020202020202"},
+    {"role": "STANDARDS", "path": "docs/engineering.md", "owner": "engineering-owner", "sha256": "0303030303030303030303030303030303030303030303030303030303030303"},
+    {"role": "ADRS", "path": "docs/adr/0001-native-architecture.md", "owner": "architecture-owner", "sha256": "0404040404040404040404040404040404040404040404040404040404040404"},
+    {"role": "TESTS", "path": "tests/test_native.py", "owner": "test-owner", "sha256": "0505050505050505050505050505050505050505050505050505050505050505"},
+    {"role": "BUG_LEDGER", "path": "BUGFIXES.md", "owner": "history-owner", "sha256": "0606060606060606060606060606060606060606060606060606060606060606"},
+    {"role": "CHANGELOG", "path": "CHANGELOG.md", "owner": "history-owner", "sha256": "0707070707070707070707070707070707070707070707070707070707070707"},
+    {"role": "WORKSPACE", "path": "consumer.code-workspace", "owner": "developer-experience-owner", "sha256": "1c2dbe12a58ac98250d79f76622ed40446b01b48f907cbe4a5f148a86a1c9bed"},
+    {"role": "ARCHITECTURE", "path": "docs/system-map.md", "owner": "architecture-owner", "sha256": "0909090909090909090909090909090909090909090909090909090909090909"}
+  ]
+}

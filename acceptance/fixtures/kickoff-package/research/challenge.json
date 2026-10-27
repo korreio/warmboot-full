@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "lane_id": "challenge",
+  "author": "independent-challenger",
+  "scope": "Adversarially review the draft ADR and kickoff plan for unsupported choices, missing risk, and authority leakage.",
+  "status": "PROVED",
+  "local_inputs": [
+    {
+      "path": "technology-options-research-brief.json",
+      "snapshot": "coordinator synthesis before CH-001 disposition",
+      "state": "DIRECT",
+      "evidence": "The brief compares language, stack, tooling, and portfolio reuse with explicit evidence references."
+    },
+    {
+      "path": "technology-architecture-adr.json",
+      "snapshot": "draft before CH-001 disposition",
+      "state": "DIRECT",
+      "evidence": "The draft selects a standard-library path and states no third-party package need."
+    },
+    {
+      "path": "kickoff-plan.json",
+      "snapshot": "draft before CH-001 disposition",
+      "state": "DIRECT",
+      "evidence": "The draft package phase is a no-op but initially lacked a runtime-capability preflight."
+    }
+  ],
+  "reviewed_artifacts": [
+    "technology-options-research-brief.json",
+    "technology-architecture-adr.json",
+    "kickoff-plan.json"
+  ],
+  "coupled_hazard_cross_checks": [],
+  "verdict": "FINDING",
+  "findings": [
+    {
+      "finding_id": "CH-001",
+      "severity": "MEDIUM",
+      "statement": "A no-package decision is unsafe until bootstrap verifies that the authorized target runtime provides the required standard-library capability.",
+      "recommended_adr_action": "Make target runtime capability a constraint and revisit trigger.",
+      "recommended_plan_action": "Add a bootstrap runtime-version/capability check before the package no-op is accepted."
+    }
+  ],
+  "unproved_boundary": null
+}

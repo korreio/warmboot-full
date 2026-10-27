@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "purpose": "Accept one useful orientation sentence for a simple human-authored code file.",
+  "language_native_form": "Java Javadoc or file-level comment immediately before the authored type",
+  "source_path": "src/OrderId.java",
+  "classification": "SIMPLE",
+  "orientation_fragment": "Carries the stable identifier used to correlate one order across adapters.",
+  "required_local_fragments": [],
+  "exact_adr_anchor": null,
+  "changed_source_assessed": true,
+  "author": "example-writer",
+  "reviewer": "example-reviewer",
+  "verdict": "CLEAN",
+  "limitation": "This synthetic literal check is not a general source linter."
+}

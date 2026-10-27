@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "objective": "Evaluate an incompatible Warmboot core upgrade without overwriting target-native truth.",
+  "compatibility": "INCOMPATIBLE_CORE_SAFETY",
+  "coordinator": "target-upgrade-coordinator",
+  "git_holder": "target-upgrade-coordinator",
+  "warmboot_release_holder": "warmboot-release-holder",
+  "challenger": "independent-upgrade-challenger",
+  "old_release": {
+    "identity_kind": "ANNOTATED_TAG",
+    "identity": "agent-warmboot-v1.0.0",
+    "resolved_commit": "1111111111111111111111111111111111111111",
+    "manifest_path": "old-release-manifest.json",
+    "manifest_sha256": "5a26cdf7cc41f665d76ab13f490c712f51bf8235bfb5541b3f4651f1610ca963",
+    "release_notes_path": "old-release-notes.json",
+    "release_notes_sha256": "afd5d3650699909fa5411e0a0d41dd281dc46b79506ea7a68c37b88da3ee35fe"
+  },
+  "new_release": {
+    "identity_kind": "ANNOTATED_TAG",
+    "identity": "agent-warmboot-v2.0.0",
+    "resolved_commit": "2222222222222222222222222222222222222222",
+    "manifest_path": "new-release-manifest.json",
+    "manifest_sha256": "e1ee2316ed120251fb7129fe05ccaa83c8851022a9d6c59a17163da98d9ade6a",
+    "release_notes_path": "new-release-notes.json",
+    "release_notes_sha256": "bc1cb6e4d4806f2ccbd73b070f1777daf2281444b3e72a9987beffc1fb9afe35"
+  },
+  "target": {
+    "path": ".acceptance-work/existing-consumer",
+    "identity_kind": "TREE_RECEIPT_SHA256",
+    "identity": "ba7ac6fd6777df250af2b6efaae2e67412d2fdd2107239a40fa2352240ea5b14",
+    "adoption_receipt_path": "adoption-receipt.json",
+    "adoption_receipt_sha256": "0b8d9be213d3e91a2d4686f2986617ffeb9e1e767ca4c8aff1415597383d8b27",
+    "native_authorities_path": "native-authorities.json",
+    "native_authorities_sha256": "ba7ac6fd6777df250af2b6efaae2e67412d2fdd2107239a40fa2352240ea5b14",
+    "helper_manifest_path": "helper-manifest.json",
+    "helper_manifest_sha256": "69c15161b43b9a7fd8ff68d6e136ed2c395238647e77c972ae3105ef3a48cc94",
+    "workspace_path": "consumer.code-workspace",
+    "workspace_sha256": "1c2dbe12a58ac98250d79f76622ed40446b01b48f907cbe4a5f148a86a1c9bed",
+    "dirt": [
+      {
+        "path": "notes/unrelated-owner.txt",
+        "state": "TRACKED_MODIFIED",
+        "sha256": "1917e2de4a3998acfb2c8d2d53c1c5a60b0922376e6aa5b34cf2f3c76e79f91d",
+        "overlap": false
+      },
+      {
+        "path": "scratch/local-analysis.txt",
+        "state": "UNTRACKED",
+        "sha256": "4021d94726ad312daaef8009f2fcbcb2397164a3b52e59caf9c14985c0fa88a4",
+        "overlap": false
+      }
+    ]
+  },
+  "authority": {
+    "may_plan": true,
+    "may_edit": false,
+    "may_commit": false,
+    "may_publish": false
+  },
+  "handoff_path": "HANDOFF.json"
+}

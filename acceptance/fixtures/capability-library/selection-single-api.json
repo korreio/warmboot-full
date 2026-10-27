@@ -1,0 +1,34 @@
+{
+  "authority": {
+    "credentials": false,
+    "database_mutation": false,
+    "deployment": false,
+    "device": false,
+    "external_security_scan": false,
+    "git_mutation": false,
+    "hosted_ci": false,
+    "llm_action": false,
+    "local_process": true,
+    "local_read": true,
+    "network": false
+  },
+  "considered_modules": [
+    "api-service-contracts"
+  ],
+  "dispositions": [
+    {
+      "destination": "docs/architecture/api-boundary.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "Target has an API boundary to design, but no network or credential authority was granted."
+      ],
+      "module_id": "api-service-contracts",
+      "revisit_trigger": "Revisit after the target owns a local contract test and native wrapper.",
+      "surviving_owner": "target-api-boundary",
+      "unproved_boundary": "Live authentication and service behavior remain UNPROVED."
+    }
+  ],
+  "schema_version": 1,
+  "selection_id": "single-api-citation",
+  "target": "synthetic-api-project"
+}

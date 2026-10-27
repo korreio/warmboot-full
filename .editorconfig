@@ -1,0 +1,24 @@
+# Editor settings matching the repository's line endings and code style.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+# Two trailing spaces are a Markdown line break.
+trim_trailing_whitespace = false
+
+[*.py]
+indent_style = space
+indent_size = 4
+
+[bin/warmboot]
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json,toml,code-workspace}]
+indent_style = space
+indent_size = 2

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "purpose": "Reject a nontrivial production type whose source gives no immediate role.",
+  "language_native_form": "Java Javadoc or file-level comment immediately before the authored type",
+  "source_path": "src/CandidateScore.java",
+  "classification": "CONSEQUENTIAL",
+  "orientation_fragment": "Scores queued candidates while preserving evidence precedence.",
+  "required_local_fragments": [
+    "Higher scores never override a rejected eligibility constraint"
+  ],
+  "exact_adr_anchor": null,
+  "changed_source_assessed": true,
+  "author": "example-writer",
+  "reviewer": "example-reviewer",
+  "verdict": "CLEAN",
+  "limitation": "This synthetic literal check is not a general source linter."
+}

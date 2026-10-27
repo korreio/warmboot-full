@@ -1,0 +1,34 @@
+{
+  "authority": {
+    "credentials": false,
+    "database_mutation": false,
+    "deployment": false,
+    "device": false,
+    "external_security_scan": false,
+    "git_mutation": false,
+    "hosted_ci": false,
+    "llm_action": false,
+    "local_process": true,
+    "local_read": true,
+    "network": false
+  },
+  "considered_modules": [
+    "device-rig-app-control"
+  ],
+  "dispositions": [
+    {
+      "destination": "docs/testing/device-simulation.md",
+      "disposition": "CITE ONLY",
+      "evidence": [
+        "Only the simulator-first ownership and recovery pattern is in scope."
+      ],
+      "module_id": "device-rig-app-control",
+      "revisit_trigger": "Revisit only after a named rig holder and explicit live-device authority exist.",
+      "surviving_owner": "target-device-boundary",
+      "unproved_boundary": "Live device, app and LLM control remain UNPROVED."
+    }
+  ],
+  "schema_version": 1,
+  "selection_id": "single-rig-citation",
+  "target": "synthetic-device-project"
+}

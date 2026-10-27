@@ -1,0 +1,73 @@
+{
+  "folders": [
+    {
+      "name": "Warmboot Full",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/__pycache__": true
+    },
+    "search.exclude": {
+      "**/__pycache__": true
+    },
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestArgs": [
+      "-s",
+      "tests",
+      "-p",
+      "test_*.py"
+    ],
+    "python.testing.unittestEnabled": true,
+    "[markdown]": {
+      "editor.wordWrap": "on"
+    }
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Warmboot: helper tests",
+        "type": "shell",
+        "command": "python3 -B -m unittest discover -s tests -p 'test_*.py'",
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Warmboot: acceptance tests",
+        "type": "shell",
+        "command": "python3 -B -m unittest discover -s acceptance/tests -p 'test_*.py'",
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Warmboot: documentation example tests",
+        "type": "shell",
+        "command": "python3 -B -m unittest discover -s examples/documentation-package/tests -p 'test_*.py'",
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Warmboot: clean example tests",
+        "type": "shell",
+        "command": "python3 -B -m unittest discover -s examples/python-clean/tests -p 'test_*.py'",
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "problemMatcher": []
+      }
+    ]
+  },
+  "extensions": {
+    "recommendations": [
+      "ms-python.python"
+    ]
+  }
+}
