@@ -14,6 +14,7 @@ Contributions are accepted under the MIT licence.
 AI-assisted contributions are fine if you have the right to submit them and have checked
 them.
 
-Be respectful. The maintainer may close or lock a thread.
+Follow the [code of conduct](CODE_OF_CONDUCT.md), including its private incident
+reporting guidance.
 
 No support is promised.
